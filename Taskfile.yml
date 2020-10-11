@@ -1,0 +1,19 @@
+# https://taskfile.dev
+
+version: "3"
+
+tasks:
+  rebuild:
+    cmds:
+      - cargo clean && cargo build
+    silent: true
+  prod-release:
+    cmds:
+      - cross build --release --target {{.TARGET}}
+  gh-release:
+    cmds:
+      - docker-compose build hub
+      - docker-compose run hub
+    env:
+      GITHUB_TOKEN:
+        sh: echo "$GITHUB_TOKEN"

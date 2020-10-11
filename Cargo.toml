@@ -4,10 +4,12 @@ version = "0.1.0"
 authors = ["Trent Hauck <trent@trenthauck.com>"]
 edition = "2018"
 
+[[bin]]
+name = "brrrr"
+path = "src/main.rs"
+
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-parquet = "1.0.0"
-arrow = "1.0.1"
 bio = "0.31.0"
 structopt = { version = "0.3", default-features = false }
