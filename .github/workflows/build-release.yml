@@ -12,22 +12,19 @@ jobs:
     steps:
       - name: Create artifacts directory
         run: mkdir artifacts
-      - name: Get the version
-        id: get_version
-        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
       - name: Create GitHub release
         id: release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ env.VERSION }}
-          release_name: ${{ env.VERSION }}
+          tag_name: ${{ github.event.release.tag_name }}
+          release_name: ${{ github.event.release.tag_name }}
           draft: true
       - name: Save release upload URL to artifact
         run: echo "${{ steps.release.outputs.upload_url }}" > artifacts/release-upload-url
       - name: Save version number to artifact
-        run: echo "${{ env.VERSION }}" > artifacts/release-version
+        run: echo "${{ github.event.release.tag_name }}" > artifacts/release-version
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v1
