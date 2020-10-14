@@ -1,10 +1,11 @@
 // (c) Copyright 2020 Trent Hauck
 // All Rights Reserved
 
-use bio::io::fasta;
 use std::fs::File;
 use std::io::{stdin, stdout, Read, Result, Write};
 use std::path::PathBuf;
+
+use bio::io::fasta;
 
 use structopt::StructOpt;
 
@@ -13,7 +14,7 @@ use structopt::StructOpt;
 /// # Arguments
 /// * `f` - The FASTA recored to write.
 pub trait RecordWriter {
-    fn write_record(&mut self, f: fasta::Record) -> Result<()>;
+    fn write_fasta_record(&mut self, f: fasta::Record) -> Result<()>;
 }
 
 /// JsonRecordWriter holds a writer, and outputs FASTA records as newline delimited json.
@@ -30,7 +31,7 @@ impl<W: Write> JsonRecordWriter<W> {
 
 impl<W: Write> RecordWriter for JsonRecordWriter<W> {
     /// Writes an input FASTA to the underlying writer.
-    fn write_record(&mut self, f: fasta::Record) -> Result<()> {
+    fn write_fasta_record(&mut self, f: fasta::Record) -> Result<()> {
         let j = serde_json::to_string(&f)?;
 
         self.writer.write_all(j.as_bytes())?;
@@ -51,7 +52,7 @@ enum Brrrr {
     },
 }
 
-/// Converts a FASTA to JSON
+/// Converts a FASTA to JSONL
 ///
 /// # Arguments
 ///
@@ -63,7 +64,9 @@ fn fa2json<R: Read, W: Write>(input: R, output: W) -> Result<()> {
 
     for read_record in reader.records() {
         let record = read_record.expect("Error parsing record.");
-        writer.write_record(record).expect("Error writing record.");
+        writer
+            .write_fasta_record(record)
+            .expect("Error writing record.");
     }
     Ok(())
 }
