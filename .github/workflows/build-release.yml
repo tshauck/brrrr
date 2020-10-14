@@ -19,7 +19,7 @@ jobs:
       - name: Create artifacts directory
         run: mkdir artifacts
       - name: Set env
-        run: echo ::set-env name=VERSION::${GITHUB_REF#refs/tags/}
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
       - name: Create GitHub release
         id: release
         uses: actions/create-release@v1
