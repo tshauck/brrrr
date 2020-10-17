@@ -1,6 +1,6 @@
-# brrrr
+# brrrr <a href='https://github.com/tshauck/brrrr'><img src='docs/brrrr-logo.png' align="right" height="200" /></a>
 
-> CLI to pre-process biological sequences and annotations to modern formats.
+Fast command line tool to process biological sequences and annotations to modern file formats.
 
 ## Usage
 
