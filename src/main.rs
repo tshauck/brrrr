@@ -53,18 +53,23 @@ impl<W: Write> RecordWriter for JsonRecordWriter<W> {
 
 /// The Enum that represents the underlying CLI.
 #[derive(Debug, StructOpt)]
-#[structopt(name = "brrrr", about = "A biological sequence toolkit for ML.")]
+#[structopt(
+    name = "brrrr",
+    about = "A fast command line tool to process biological sequences and annotations to modern file formats."
+)]
 enum Brrrr {
-    #[structopt(name = "fa2json", about = "Converts a FASTA input to jsonl.")]
+    #[structopt(name = "fa2jsonl", about = "Converts a FASTA input to jsonl.")]
     Fa2jsonl {
         #[structopt(parse(from_os_str))]
         input: Option<PathBuf>,
     },
+    #[structopt(name = "gff2jsonl", about = "Converts a GFF-like input to jsonl.")]
     Gff2jsonl {
         #[structopt(parse(from_os_str))]
         input: Option<PathBuf>,
 
         #[structopt(short = "g", long = "gfftype", default_value = "gff3")]
+        /// The specific GFF format: gff3, gff2, or gft
         gff_type: gff::GffType,
     },
 }
@@ -75,15 +80,23 @@ enum Brrrr {
 ///
 /// * `input` an input that implements the Read trait.
 /// * `output` an output that implements the Write trait.
-fn fa2json<R: Read, W: Write>(input: R, output: W) -> Result<()> {
+fn fa2jsonl<R: Read, W: Write>(input: R, output: W) -> Result<()> {
     let reader = fasta::Reader::new(input);
     let writer = &mut JsonRecordWriter::new(output);
 
     for read_record in reader.records() {
         let record = read_record.expect("Error parsing record.");
-        writer
-            .write_fasta_record(record)
-            .expect("Error writing record.");
+        let write_op = writer.write_fasta_record(record);
+
+        if let Err(e) = write_op {
+            match e.kind() {
+                ErrorKind::BrokenPipe => break,
+                _ => {
+                    writeln!(stderr(), "{}", e).unwrap();
+                    process::exit(1);
+                }
+            }
+        }
     }
     Ok(())
 }
@@ -94,15 +107,16 @@ fn fa2json<R: Read, W: Write>(input: R, output: W) -> Result<()> {
 ///
 /// * `input` an input that implements the Read trait.
 /// * `output` an output that implements the Write trait.
-fn gff2json<R: Read, W: Write>(input: R, output: W, gff_type: gff::GffType) -> Result<()> {
+/// * `gff_type` the underlying gff type.
+fn gff2jsonl<R: Read, W: Write>(input: R, output: W, gff_type: gff::GffType) -> Result<()> {
     let mut reader = gff::Reader::new(input, gff_type);
     let writer = &mut JsonRecordWriter::new(output);
 
     for read_record in reader.records() {
         let record = read_record.expect("Error parsing record.");
-        let written = writer.write_gff_record(record);
+        let write_op = writer.write_gff_record(record);
 
-        if let Err(e) = written {
+        if let Err(e) = write_op {
             match e.kind() {
                 ErrorKind::BrokenPipe => break,
                 _ => {
@@ -112,7 +126,6 @@ fn gff2json<R: Read, W: Write>(input: R, output: W, gff_type: gff::GffType) -> R
             }
         }
     }
-
     Ok(())
 }
 
@@ -120,20 +133,20 @@ fn main() {
     match Brrrr::from_args() {
         Brrrr::Fa2jsonl { input } => match input {
             None => {
-                fa2json(stdin(), stdout()).expect("Error converting to jsonl.");
+                fa2jsonl(stdin(), stdout()).expect("Error converting to jsonl.");
             }
             Some(input) => {
                 let f = File::open(input).expect("Error opening file.");
-                fa2json(f, stdout()).expect("Error converting to jsonl.");
+                fa2jsonl(f, stdout()).expect("Error converting to jsonl.");
             }
         },
         Brrrr::Gff2jsonl { input, gff_type } => match input {
             None => {
-                gff2json(stdin(), stdout(), gff_type).expect("Error converting to jsonl.");
+                gff2jsonl(stdin(), stdout(), gff_type).expect("Error converting to jsonl.");
             }
             Some(input) => {
                 let f = File::open(input).expect("Error opening file.");
-                gff2json(f, stdout(), gff_type).expect("Error converting to jsonl.");
+                gff2jsonl(f, stdout(), gff_type).expect("Error converting to jsonl.");
             }
         },
     }
