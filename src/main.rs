@@ -2,19 +2,19 @@
 // All Rights Reserved
 
 use std::fs::File;
-use std::io::{stdin, stdout, Read, Result, Write};
+use std::io::{stderr, stdin, stdout, ErrorKind, Read, Result, Write};
 use std::path::PathBuf;
+use std::process;
 
 use bio::io::fasta;
+use bio::io::gff;
 
 use structopt::StructOpt;
 
 /// A RecordWriter writes FASTA records to the underlying source.
-///
-/// # Arguments
-/// * `f` - The FASTA recored to write.
 pub trait RecordWriter {
     fn write_fasta_record(&mut self, f: fasta::Record) -> Result<()>;
+    fn write_gff_record(&mut self, f: gff::Record) -> Result<()>;
 }
 
 /// JsonRecordWriter holds a writer, and outputs FASTA records as newline delimited json.
@@ -39,6 +39,16 @@ impl<W: Write> RecordWriter for JsonRecordWriter<W> {
 
         Ok(())
     }
+
+    /// Writes and input GFF file to the underlying writer.
+    fn write_gff_record(&mut self, f: gff::Record) -> Result<()> {
+        let j = serde_json::to_string(&f)?;
+
+        self.writer.write_all(j.as_bytes())?;
+        self.writer.write_all("\n".as_bytes())?;
+
+        Ok(())
+    }
 }
 
 /// The Enum that represents the underlying CLI.
@@ -49,6 +59,13 @@ enum Brrrr {
     Fa2jsonl {
         #[structopt(parse(from_os_str))]
         input: Option<PathBuf>,
+    },
+    Gff2jsonl {
+        #[structopt(parse(from_os_str))]
+        input: Option<PathBuf>,
+
+        #[structopt(short = "g", long = "gfftype", default_value = "gff3")]
+        gff_type: gff::GffType,
     },
 }
 
@@ -71,6 +88,34 @@ fn fa2json<R: Read, W: Write>(input: R, output: W) -> Result<()> {
     Ok(())
 }
 
+/// Converts a GFF file to JSONL
+///
+/// # Arguments
+///
+/// * `input` an input that implements the Read trait.
+/// * `output` an output that implements the Write trait.
+fn gff2json<R: Read, W: Write>(input: R, output: W, gff_type: gff::GffType) -> Result<()> {
+    let mut reader = gff::Reader::new(input, gff_type);
+    let writer = &mut JsonRecordWriter::new(output);
+
+    for read_record in reader.records() {
+        let record = read_record.expect("Error parsing record.");
+        let written = writer.write_gff_record(record);
+
+        if let Err(e) = written {
+            match e.kind() {
+                ErrorKind::BrokenPipe => break,
+                _ => {
+                    writeln!(stderr(), "{}", e).unwrap();
+                    process::exit(1);
+                }
+            }
+        }
+    }
+
+    Ok(())
+}
+
 fn main() {
     match Brrrr::from_args() {
         Brrrr::Fa2jsonl { input } => match input {
@@ -80,6 +125,15 @@ fn main() {
             Some(input) => {
                 let f = File::open(input).expect("Error opening file.");
                 fa2json(f, stdout()).expect("Error converting to jsonl.");
+            }
+        },
+        Brrrr::Gff2jsonl { input, gff_type } => match input {
+            None => {
+                gff2json(stdin(), stdout(), gff_type).expect("Error converting to jsonl.");
+            }
+            Some(input) => {
+                let f = File::open(input).expect("Error opening file.");
+                gff2json(f, stdout(), gff_type).expect("Error converting to jsonl.");
             }
         },
     }
