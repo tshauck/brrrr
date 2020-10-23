@@ -7,49 +7,15 @@ use std::path::PathBuf;
 use std::process;
 
 use bio::io::fasta;
+use bio::io::fastq;
 use bio::io::gff;
 
 use structopt::StructOpt;
 
-/// A RecordWriter writes FASTA records to the underlying source.
-pub trait RecordWriter {
-    fn write_fasta_record(&mut self, f: fasta::Record) -> Result<()>;
-    fn write_gff_record(&mut self, f: gff::Record) -> Result<()>;
-}
+mod json_writer;
+pub mod writer;
 
-/// JsonRecordWriter holds a writer, and outputs FASTA records as newline delimited json.
-struct JsonRecordWriter<W: Write> {
-    writer: W,
-}
-
-impl<W: Write> JsonRecordWriter<W> {
-    /// Creates a new JsonRecordWriter with a writer.
-    pub fn new(w: W) -> Self {
-        Self { writer: w }
-    }
-}
-
-impl<W: Write> RecordWriter for JsonRecordWriter<W> {
-    /// Writes an input FASTA to the underlying writer.
-    fn write_fasta_record(&mut self, f: fasta::Record) -> Result<()> {
-        let j = serde_json::to_string(&f)?;
-
-        self.writer.write_all(j.as_bytes())?;
-        self.writer.write_all("\n".as_bytes())?;
-
-        Ok(())
-    }
-
-    /// Writes and input GFF file to the underlying writer.
-    fn write_gff_record(&mut self, f: gff::Record) -> Result<()> {
-        let j = serde_json::to_string(&f)?;
-
-        self.writer.write_all(j.as_bytes())?;
-        self.writer.write_all("\n".as_bytes())?;
-
-        Ok(())
-    }
-}
+use writer::RecordWriter;
 
 /// The Enum that represents the underlying CLI.
 #[derive(Debug, StructOpt)]
@@ -72,6 +38,38 @@ enum Brrrr {
         /// The specific GFF format: gff3, gff2, or gft
         gff_type: gff::GffType,
     },
+    #[structopt(name = "fq2jsonl", about = "Converts a FASTQ input to jsonl")]
+    Fq2jsonl {
+        #[structopt(parse(from_os_str))]
+        input: Option<PathBuf>,
+    },
+}
+
+/// Converts a FASTA file to JSONL
+///
+/// # Arguments
+///
+/// * `input` an input that implements the Read trait.
+/// * `output` an output that implements the Write trait.
+fn fq2jsonl<R: Read, W: Write>(input: R, output: W) -> Result<()> {
+    let reader = fastq::Reader::new(input);
+    let writer = &mut json_writer::JsonRecordWriter::new(output);
+
+    for read_record in reader.records() {
+        let record = read_record.expect("Error parsing record.");
+        let write_op = writer.write_fastq_record(record);
+
+        if let Err(e) = write_op {
+            match e.kind() {
+                ErrorKind::BrokenPipe => break,
+                _ => {
+                    writeln!(stderr(), "{}", e).unwrap();
+                    process::exit(1);
+                }
+            }
+        }
+    }
+    Ok(())
 }
 
 /// Converts a FASTA to JSONL
@@ -82,7 +80,7 @@ enum Brrrr {
 /// * `output` an output that implements the Write trait.
 fn fa2jsonl<R: Read, W: Write>(input: R, output: W) -> Result<()> {
     let reader = fasta::Reader::new(input);
-    let writer = &mut JsonRecordWriter::new(output);
+    let writer = &mut json_writer::JsonRecordWriter::new(output);
 
     for read_record in reader.records() {
         let record = read_record.expect("Error parsing record.");
@@ -110,7 +108,7 @@ fn fa2jsonl<R: Read, W: Write>(input: R, output: W) -> Result<()> {
 /// * `gff_type` the underlying gff type.
 fn gff2jsonl<R: Read, W: Write>(input: R, output: W, gff_type: gff::GffType) -> Result<()> {
     let mut reader = gff::Reader::new(input, gff_type);
-    let writer = &mut JsonRecordWriter::new(output);
+    let writer = &mut json_writer::JsonRecordWriter::new(output);
 
     for read_record in reader.records() {
         let record = read_record.expect("Error parsing record.");
@@ -147,6 +145,15 @@ fn main() {
             Some(input) => {
                 let f = File::open(input).expect("Error opening file.");
                 gff2jsonl(f, stdout(), gff_type).expect("Error converting to jsonl.");
+            }
+        },
+        Brrrr::Fq2jsonl { input } => match input {
+            None => {
+                fq2jsonl(stdin(), stdout()).expect("Error converting to jsonl.");
+            }
+            Some(input) => {
+                let f = File::open(input).expect("Error opening file.");
+                fq2jsonl(f, stdout()).expect("Error converting to jsonl.");
             }
         },
     }
