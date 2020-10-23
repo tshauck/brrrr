@@ -45,7 +45,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        build: [macos, linux]
+        build: [macos, linux, linux-arm]
         include:
           - build: macos
             os: macos-latest
@@ -55,7 +55,7 @@ jobs:
             os: ubuntu-18.04
             rust: nightly
             target: x86_64-unknown-linux-musl
-          - build: linux
+          - build: linux-arm
             os: ubuntu-18.04
             rust: nightly
             target: aarch64-unknown-linux-gnu
@@ -70,8 +70,8 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Install x86_64-unknown-linux-musl depedencies
-        if: matrix.target == 'x86_64-unknown-linux-musl'
+      - name: Install linux depdencies
+        if: matrix.build == 'linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends musl-tools
@@ -92,12 +92,12 @@ jobs:
         run: task prod-release TARGET=${{ matrix.target }}
 
       - name: Strip release binary (aarch)
-        if: matrix.target == 'aarch64-unknown-linux-gnu'
+        if: matrix.build == 'linux-arm'
         run: |
           docker run --rm -v $PWD/target:/target:Z rustembedded/cross:${{ matrix.target }} aarch64-linux-gnu-strip /target/${{ matrix.target}}/release/brrrr
 
       - name: Strip release binary (linux and macos)
-        if: matrix.target == 'x86_64-unknown-linux-musl' || matrix.build == 'macos'
+        if: matrix.build == 'linux' || matrix.build == 'macos'
         run: strip "target/${{ matrix.target }}/release/brrrr"
 
       - name: Get release download URL
