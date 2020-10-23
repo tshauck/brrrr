@@ -70,7 +70,7 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Install linux depedencies
+      - name: Install x86_64-unknown-linux-musl depedencies
         if: matrix.target == 'x86_64-unknown-linux-musl'
         run: |
           sudo apt-get update
@@ -91,8 +91,13 @@ jobs:
       - name: Build release binary
         run: task prod-release TARGET=${{ matrix.target }}
 
+      - name: Strip release binary (aarch)
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
+        run: |
+          docker run --rm -v $PWD/target:/target:Z rustembedded/cross:${{ matrix.target }} aarch64-linux-gnu-strip /target/${{ matrix.target}}/release/brrrr
+
       - name: Strip release binary (linux and macos)
-        if: matrix.build == 'linux' || matrix.build == 'macos'
+        if: matrix.target == 'x86_64-unknown-linux-musl' || matrix.build == 'macos'
         run: strip "target/${{ matrix.target }}/release/brrrr"
 
       - name: Get release download URL
