@@ -17,4 +17,7 @@ structopt = { version = "0.3", default-features = false }
 [dev-dependencies]
 assert_cmd = "1.0.1"
 criterion = "0.3"
-tempfile = "3"
+
+[[bench]]
+name = "read_fasta"
+harness = false

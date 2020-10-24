@@ -38,9 +38,9 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           toolchain: ${{ matrix.rust }}
-          profile: minimal
           override: true
           target: ${{ matrix.target }}
+          components: clippy
 
       - name: Test
         run: |
@@ -49,3 +49,7 @@ jobs:
       - name: Clippy
         run: |
           cargo clippy
+
+      - name: Benchmarks
+        run: |
+          task benchmark

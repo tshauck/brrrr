@@ -5,17 +5,20 @@
 
 use criterion::{criterion_group, criterion_main, Criterion};
 
+use std::env;
 use std::fs::File;
-use bio::io::fasta;
+use std::io::sink;
 
 extern crate brrrr;
 
 fn criterion_benchmark(c: &mut Criterion) {
-    c.bench_function("Write 1000 records.", |b| {
-        let mut tmpfile: File = tempfile::tempfile().unwrap();
+    c.bench_function("Write 10000 records.", |b| {
+        let path: &'static str = env!("BENCH_DATA");
 
         b.iter(|| {
-            let _ = nom_pdb::Parser::parse(PDB_7ZNF);
+            let filename = format!("./{}/10000.fasta", path);
+            let f = File::open(filename).expect("Error opening file.");
+            let _ = brrrr::json_writer::fa2jsonl(f, sink());
         })
     });
 }

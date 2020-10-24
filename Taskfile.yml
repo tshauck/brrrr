@@ -20,3 +20,8 @@ tasks:
     env:
       GITHUB_TOKEN:
         sh: echo "$GITHUB_TOKEN"
+  benchmark:
+    cmds:
+      - cargo bench
+    env:
+      BENCH_DATA: ./benches/data

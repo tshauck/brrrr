@@ -2,19 +2,14 @@
 // All Rights Reserved
 
 use std::fs::File;
-use std::io::{stdin, stdout, ErrorKind, Read, Result, Write};
+use std::io::{stdin, stdout, Result};
 use std::path::PathBuf;
 
-use bio::io::fasta;
-use bio::io::fastq;
 use bio::io::gff;
-
 use structopt::StructOpt;
 
 mod json_writer;
 mod writer;
-
-use writer::RecordWriter;
 
 /// The Enum that represents the underlying CLI.
 #[derive(Debug, StructOpt)]
@@ -44,100 +39,27 @@ enum Brrrr {
     },
 }
 
-/// Converts a FASTA file to JSONL
-///
-/// # Arguments
-///
-/// * `input` an input that implements the Read trait.
-/// * `output` an output that implements the Write trait.
-fn fq2jsonl<R: Read, W: Write>(input: R, output: W) -> Result<()> {
-    let reader = fastq::Reader::new(input);
-    let record_writer = &mut json_writer::JsonRecordWriter::new(output);
-
-    for read_record in reader.records() {
-        let record = read_record.expect("Error parsing record.");
-        let write_op = record_writer.write_serde_record(record);
-
-        if let Err(e) = write_op {
-            match e.kind() {
-                ErrorKind::BrokenPipe => break,
-                _ => return Err(e),
-            }
-        }
-    }
-    Ok(())
-}
-
-/// Converts a FASTA to JSONL
-///
-/// # Arguments
-///
-/// * `input` an input that implements the Read trait.
-/// * `output` an output that implements the Write trait.
-fn fa2jsonl<R: Read, W: Write>(input: R, output: W) -> Result<()> {
-    let reader = fasta::Reader::new(input);
-    let record_writer = &mut json_writer::JsonRecordWriter::new(output);
-
-    for read_record in reader.records() {
-        let record = read_record.expect("Error parsing record.");
-        let write_op = record_writer.write_serde_record(record);
-
-        if let Err(e) = write_op {
-            match e.kind() {
-                ErrorKind::BrokenPipe => break,
-                _ => return Err(e),
-            }
-        }
-    }
-    Ok(())
-}
-
-/// Converts a GFF file to JSONL
-///
-/// # Arguments
-///
-/// * `input` an input that implements the Read trait.
-/// * `output` an output that implements the Write trait.
-/// * `gff_type` the underlying gff type.
-fn gff2jsonl<R: Read, W: Write>(input: R, output: W, gff_type: gff::GffType) -> Result<()> {
-    let mut reader = gff::Reader::new(input, gff_type);
-    let record_writer = &mut json_writer::JsonRecordWriter::new(output);
-
-    for read_record in reader.records() {
-        let record = read_record.expect("Error parsing record.");
-        let write_op = record_writer.write_serde_record(record);
-
-        if let Err(e) = write_op {
-            match e.kind() {
-                ErrorKind::BrokenPipe => break,
-                _ => return Err(e),
-            }
-        }
-    }
-    Ok(())
-}
-
 fn main() -> Result<()> {
     match Brrrr::from_args() {
         Brrrr::Fa2jsonl { input } => match input {
-            None => fa2jsonl(stdin(), stdout()),
+            None => json_writer::fa2jsonl(stdin(), stdout()),
             Some(input) => {
                 let f = File::open(input).expect("Error opening file.");
-                fa2jsonl(f, stdout())
+                json_writer::fa2jsonl(f, stdout())
             }
         },
         Brrrr::Gff2jsonl { input, gff_type } => match input {
-            None => gff2jsonl(stdin(), stdout(), gff_type),
+            None => json_writer::gff2jsonl(stdin(), stdout(), gff_type),
             Some(input) => {
                 let f = File::open(input).expect("Error opening file.");
-                gff2jsonl(f, stdout(), gff_type)
+                json_writer::gff2jsonl(f, stdout(), gff_type)
             }
         },
         Brrrr::Fq2jsonl { input } => match input {
-            None => fq2jsonl(stdin(), stdout()),
+            None => json_writer::fq2jsonl(stdin(), stdout()),
             Some(input) => {
                 let f = File::open(input).expect("Error opening file.");
-                fq2jsonl(f, stdout())
+                json_writer::fq2jsonl(f, stdout())
             }
         },
     }
