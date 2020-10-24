@@ -12,7 +12,7 @@ use bio::io::gff;
 use structopt::StructOpt;
 
 mod json_writer;
-pub mod writer;
+mod writer;
 
 use writer::RecordWriter;
 
@@ -52,11 +52,11 @@ enum Brrrr {
 /// * `output` an output that implements the Write trait.
 fn fq2jsonl<R: Read, W: Write>(input: R, output: W) -> Result<()> {
     let reader = fastq::Reader::new(input);
-    let writer = &mut json_writer::JsonRecordWriter::new(output);
+    let record_writer = &mut json_writer::JsonRecordWriter::new(output);
 
     for read_record in reader.records() {
         let record = read_record.expect("Error parsing record.");
-        let write_op = writer.write_fastq_record(record);
+        let write_op = record_writer.write_serde_record(record);
 
         if let Err(e) = write_op {
             match e.kind() {
@@ -76,11 +76,11 @@ fn fq2jsonl<R: Read, W: Write>(input: R, output: W) -> Result<()> {
 /// * `output` an output that implements the Write trait.
 fn fa2jsonl<R: Read, W: Write>(input: R, output: W) -> Result<()> {
     let reader = fasta::Reader::new(input);
-    let writer = &mut json_writer::JsonRecordWriter::new(output);
+    let record_writer = &mut json_writer::JsonRecordWriter::new(output);
 
     for read_record in reader.records() {
         let record = read_record.expect("Error parsing record.");
-        let write_op = writer.write_fasta_record(record);
+        let write_op = record_writer.write_serde_record(record);
 
         if let Err(e) = write_op {
             match e.kind() {
@@ -101,11 +101,11 @@ fn fa2jsonl<R: Read, W: Write>(input: R, output: W) -> Result<()> {
 /// * `gff_type` the underlying gff type.
 fn gff2jsonl<R: Read, W: Write>(input: R, output: W, gff_type: gff::GffType) -> Result<()> {
     let mut reader = gff::Reader::new(input, gff_type);
-    let writer = &mut json_writer::JsonRecordWriter::new(output);
+    let record_writer = &mut json_writer::JsonRecordWriter::new(output);
 
     for read_record in reader.records() {
         let record = read_record.expect("Error parsing record.");
-        let write_op = writer.write_gff_record(record);
+        let write_op = record_writer.write_serde_record(record);
 
         if let Err(e) = write_op {
             match e.kind() {
