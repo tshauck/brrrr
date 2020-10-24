@@ -45,3 +45,7 @@ jobs:
       - name: Test
         run: |
           task test
+
+      - name: Clippy
+        run: |
+          cargo clippy

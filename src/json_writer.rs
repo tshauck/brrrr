@@ -26,7 +26,7 @@ impl<W: Write> writer::RecordWriter for JsonRecordWriter<W> {
         let j = serde_json::to_string(&f)?;
 
         self.writer.write_all(j.as_bytes())?;
-        self.writer.write_all("\n".as_bytes())?;
+        self.writer.write_all(b"\n")?;
 
         Ok(())
     }
@@ -36,7 +36,7 @@ impl<W: Write> writer::RecordWriter for JsonRecordWriter<W> {
         let j = serde_json::to_string(&f)?;
 
         self.writer.write_all(j.as_bytes())?;
-        self.writer.write_all("\n".as_bytes())?;
+        self.writer.write_all(b"\n")?;
 
         Ok(())
     }
@@ -46,7 +46,7 @@ impl<W: Write> writer::RecordWriter for JsonRecordWriter<W> {
         let j = serde_json::to_string(&f)?;
 
         self.writer.write_all(j.as_bytes())?;
-        self.writer.write_all("\n".as_bytes())?;
+        self.writer.write_all(b"\n")?;
 
         Ok(())
     }
