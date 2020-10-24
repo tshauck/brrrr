@@ -2,9 +2,8 @@
 // All Rights Reserved
 
 use std::fs::File;
-use std::io::{stderr, stdin, stdout, ErrorKind, Read, Result, Write};
+use std::io::{stdin, stdout, ErrorKind, Read, Result, Write};
 use std::path::PathBuf;
-use std::process;
 
 use bio::io::fasta;
 use bio::io::fastq;
@@ -62,10 +61,7 @@ fn fq2jsonl<R: Read, W: Write>(input: R, output: W) -> Result<()> {
         if let Err(e) = write_op {
             match e.kind() {
                 ErrorKind::BrokenPipe => break,
-                _ => {
-                    writeln!(stderr(), "{}", e).unwrap();
-                    process::exit(1);
-                }
+                _ => return Err(e),
             }
         }
     }
@@ -89,10 +85,7 @@ fn fa2jsonl<R: Read, W: Write>(input: R, output: W) -> Result<()> {
         if let Err(e) = write_op {
             match e.kind() {
                 ErrorKind::BrokenPipe => break,
-                _ => {
-                    writeln!(stderr(), "{}", e).unwrap();
-                    process::exit(1);
-                }
+                _ => return Err(e),
             }
         }
     }
@@ -117,43 +110,34 @@ fn gff2jsonl<R: Read, W: Write>(input: R, output: W, gff_type: gff::GffType) -> 
         if let Err(e) = write_op {
             match e.kind() {
                 ErrorKind::BrokenPipe => break,
-                _ => {
-                    writeln!(stderr(), "{}", e).unwrap();
-                    process::exit(1);
-                }
+                _ => return Err(e),
             }
         }
     }
     Ok(())
 }
 
-fn main() {
+fn main() -> Result<()> {
     match Brrrr::from_args() {
         Brrrr::Fa2jsonl { input } => match input {
-            None => {
-                fa2jsonl(stdin(), stdout()).expect("Error converting to jsonl.");
-            }
+            None => fa2jsonl(stdin(), stdout()),
             Some(input) => {
                 let f = File::open(input).expect("Error opening file.");
-                fa2jsonl(f, stdout()).expect("Error converting to jsonl.");
+                fa2jsonl(f, stdout())
             }
         },
         Brrrr::Gff2jsonl { input, gff_type } => match input {
-            None => {
-                gff2jsonl(stdin(), stdout(), gff_type).expect("Error converting to jsonl.");
-            }
+            None => gff2jsonl(stdin(), stdout(), gff_type),
             Some(input) => {
                 let f = File::open(input).expect("Error opening file.");
-                gff2jsonl(f, stdout(), gff_type).expect("Error converting to jsonl.");
+                gff2jsonl(f, stdout(), gff_type)
             }
         },
         Brrrr::Fq2jsonl { input } => match input {
-            None => {
-                fq2jsonl(stdin(), stdout()).expect("Error converting to jsonl.");
-            }
+            None => fq2jsonl(stdin(), stdout()),
             Some(input) => {
                 let f = File::open(input).expect("Error opening file.");
-                fq2jsonl(f, stdout()).expect("Error converting to jsonl.");
+                fq2jsonl(f, stdout())
             }
         },
     }
