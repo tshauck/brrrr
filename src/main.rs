@@ -6,41 +6,43 @@ use std::io::{stdin, stdout, Result};
 use std::path::PathBuf;
 
 use bio::io::gff;
-use structopt::StructOpt;
+use clap::Clap;
 
 mod json_writer;
 mod writer;
 
 /// The Enum that represents the underlying CLI.
-#[derive(Debug, StructOpt)]
-#[structopt(
+#[derive(Clap)]
+#[clap(
     name = "brrrr",
-    about = "A fast command line tool to process biological sequences and annotations to modern file formats."
+    about = "Convert domain specific files into common formats.",
+    author = "Trent Hauck <trent@trenthauck.com>",
+    version = "0.4.2"
 )]
 enum Brrrr {
-    #[structopt(name = "fa2jsonl", about = "Converts a FASTA input to jsonl.")]
+    #[clap(name = "fa2jsonl", about = "Converts a FASTA input to jsonl.")]
     Fa2jsonl {
-        #[structopt(parse(from_os_str))]
+        #[clap(parse(from_os_str))]
         input: Option<PathBuf>,
     },
-    #[structopt(name = "gff2jsonl", about = "Converts a GFF-like input to jsonl.")]
+    #[clap(name = "gff2jsonl", about = "Converts a GFF-like input to jsonl.")]
     Gff2jsonl {
-        #[structopt(parse(from_os_str))]
+        #[clap(parse(from_os_str))]
         input: Option<PathBuf>,
 
-        #[structopt(short = "g", long = "gfftype", default_value = "gff3")]
+        #[clap(short, long, default_value = "gff3")]
         /// The specific GFF format: gff3, gff2, or gft
         gff_type: gff::GffType,
     },
-    #[structopt(name = "fq2jsonl", about = "Converts a FASTQ input to jsonl")]
+    #[clap(name = "fq2jsonl", about = "Converts a FASTQ input to jsonl")]
     Fq2jsonl {
-        #[structopt(parse(from_os_str))]
+        #[clap(parse(from_os_str))]
         input: Option<PathBuf>,
     },
 }
 
 fn main() -> Result<()> {
-    match Brrrr::from_args() {
+    match Brrrr::parse() {
         Brrrr::Fa2jsonl { input } => match input {
             None => json_writer::fa2jsonl(stdin(), stdout()),
             Some(input) => {

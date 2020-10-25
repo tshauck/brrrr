@@ -3,5 +3,6 @@ name = "cz_conventional_commits"
 version = "0.4.2"
 tag_format = "v$version"
 version_files = [
-  "./Cargo.toml:version"
+  "./Cargo.toml:version",
+  "./src/main.rs:version"
 ]
