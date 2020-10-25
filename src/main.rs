@@ -15,7 +15,7 @@ mod writer;
 #[derive(Clap)]
 #[clap(
     name = "brrrr",
-    about = "Convert domain specific files into common formats.",
+    about = "Convert biology and chemistry domain formats into common formats.",
     author = "Trent Hauck <trent@trenthauck.com>",
     version = "0.4.2"
 )]
