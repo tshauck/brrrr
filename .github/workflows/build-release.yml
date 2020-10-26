@@ -121,10 +121,10 @@ jobs:
 
           if [ "${{ matrix.os }}" = "windows-2019" ]; then
               target_path="target/${{ matrix.target }}/release/brrrr.exe"
-              asset_name="brrrr-${{ env.RELEASE_VERSION }}-${{ matrix.target }}.exe"
+              asset_name="brrrr-${release_version}-${{ matrix.target }}.exe"
           else
               target_path="target/${{ matrix.target }}/release/brrrr"
-              asset_name="brrrr-${{ env.RELEASE_VERSION }}-${{ matrix.target }}"
+              asset_name="brrrr-${release_version}-${{ matrix.target }}"
           fi
 
           echo "TARGET_PATH=${target_path}" >> $GITHUB_ENV
