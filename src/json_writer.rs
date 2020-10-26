@@ -28,9 +28,7 @@ impl<W: Write> JsonRecordWriter<W> {
 impl<W: Write> writer::RecordWriter for JsonRecordWriter<W> {
     /// Writes an input FASTA to the underlying writer.
     fn write_serde_record<S: Serialize>(&mut self, r: S) -> Result<()> {
-        let j = serde_json::to_string(&r)?;
-
-        self.writer.write_all(j.as_bytes())?;
+        serde_json::to_writer(&mut self.writer, &r)?;
         self.writer.write_all(b"\n")?;
 
         Ok(())
