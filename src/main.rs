@@ -6,10 +6,22 @@ use std::io::{stdin, stdout, Result};
 use std::path::PathBuf;
 
 use bio::io::gff;
-use clap::Clap;
+use clap::{App, Clap, IntoApp};
 
 mod json_writer;
 mod writer;
+
+use clap_generate::generators::{Bash, Fish, PowerShell, Zsh};
+use clap_generate::{generate, Generator};
+
+#[derive(Clap, Debug, PartialEq)]
+enum GeneratorChoice {
+    Bash,
+    Fish,
+    #[clap(name = "powershell")]
+    PowerShell,
+    Zsh,
+}
 
 /// The Enum that represents the underlying CLI.
 #[derive(Clap)]
@@ -39,6 +51,15 @@ enum Brrrr {
         #[clap(parse(from_os_str))]
         input: Option<PathBuf>,
     },
+    #[clap(name = "gen", about = "Generate the man page for the tool.")]
+    Completion {
+        #[clap(short, long, arg_enum)]
+        gen_type: GeneratorChoice,
+    },
+}
+
+fn print_completions<G: Generator>(app: &mut App) {
+    generate::<G, _>(app, app.get_name().to_string(), &mut stdout());
 }
 
 fn main() -> Result<()> {
@@ -64,5 +85,15 @@ fn main() -> Result<()> {
                 json_writer::fq2jsonl(f, stdout())
             }
         },
+        Brrrr::Completion { gen_type } => {
+            let mut app = Brrrr::into_app();
+            match gen_type {
+                GeneratorChoice::Bash => print_completions::<Bash>(&mut app),
+                GeneratorChoice::Fish => print_completions::<Fish>(&mut app),
+                GeneratorChoice::PowerShell => print_completions::<PowerShell>(&mut app),
+                GeneratorChoice::Zsh => print_completions::<Zsh>(&mut app),
+            }
+            Ok(())
+        }
     }
 }
