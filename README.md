@@ -5,6 +5,8 @@ file formats.
 
 ## Usage
 
+For a self-contained example script, see examples.sh.
+
 ```console
 $ brrrr
 brrrr 0.4.2
@@ -20,7 +22,7 @@ FLAGS:
 
 SUBCOMMANDS:
     fa2jsonl     Converts a FASTA input to jsonl.
-    fq2jsonl     Converts a FASTQ input to jsonl
+    fq2jsonl     Converts a FASTQ input to jsonl.
     gff2jsonl    Converts a GFF-like input to jsonl.
     help         Prints this message or the help of the given subcommand(s)
 ```

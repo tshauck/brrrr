@@ -46,7 +46,7 @@ enum Brrrr {
         /// The specific GFF format: gff3, gff2, or gft
         gff_type: gff::GffType,
     },
-    #[clap(name = "fq2jsonl", about = "Converts a FASTQ input to jsonl")]
+    #[clap(name = "fq2jsonl", about = "Converts a FASTQ input to jsonl.")]
     Fq2jsonl {
         #[clap(parse(from_os_str))]
         input: Option<PathBuf>,
