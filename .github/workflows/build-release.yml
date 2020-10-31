@@ -131,8 +131,16 @@ jobs:
 
           env | sort
 
-          sha=$(sha256sum ${target_path} | cut -d " " -f 1)
-          echo "${sha} brrrr-${release_version}-${{ matrix.target }}" > "$ASSET_NAME".sha256sum.txt
+          if [ "${{ matrix.os }}" = "windows-2019" ]; then
+              target_path="target/${{ matrix.target }}/release/brrrr.exe"
+              asset_name="brrrr-${release_version}-${{ matrix.target }}.exe"
+          elif [[ "${{ matrix.os }}" == "macos-latest" ]; then
+              sha=$(shasum -a 256 ${target_path} | cut -d " " -f 1)
+              echo "${sha} brrrr-${release_version}-${{ matrix.target }}" > "$ASSET_NAME".sha256sum.txt
+          else
+              sha=$(sha256sum ${target_path} | cut -d " " -f 1)
+              echo "${sha} brrrr-${release_version}-${{ matrix.target }}" > "$ASSET_NAME".sha256sum.txt
+          fi
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
