@@ -1,4 +1,4 @@
-class BrrrrBin < Formula
+class Brrrr < Formula
   version '0.6.2'
   desc "Fast command line tool to process biological sequences and annotations to modern
 file formats."
