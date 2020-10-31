@@ -34,7 +34,7 @@ jobs:
       - name: Save version number to artifact
         run: echo "${{ env.VERSION }}" > artifacts/release-version
       - name: Upload artifacts
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         with:
           name: artifacts
           path: artifacts
@@ -80,7 +80,7 @@ jobs:
           sudo apt-get install -y --no-install-recommends musl-tools
 
       - name: Install Rust
-        uses: actions-rs/toolchain@v1
+        uses: actions-rs/toolchain@v2
         with:
           toolchain: ${{ matrix.rust }}
           profile: minimal
@@ -104,7 +104,7 @@ jobs:
         run: strip "target/${{ matrix.target }}/release/brrrr"
 
       - name: Get release download URL
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v2
         with:
           name: artifacts
           path: artifacts
@@ -128,11 +128,21 @@ jobs:
 
           echo "TARGET_PATH=${target_path}" >> $GITHUB_ENV
           echo "ASSET_NAME=${asset_name}" >> $GITHUB_ENV
+
           env | sort
+
+          sha=$(sha256sum ${target_path} | cut -d " " -f 1)
+          echo "${sha} brrrr-${release_version}-${{ matrix.target }}" > "$ASSET_NAME".sha256sum.txt
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ env.ASSET_NAME }}.sha256sum.txt
+          path: ${{ env.ASSET_NAME }}.sha256sum.txt
 
       - name: Upload Release Asset
         id: upload-release-asset
-        uses: actions/upload-release-asset@v1
+        uses: actions/upload-release-asset@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -140,13 +150,20 @@ jobs:
           asset_path: ${{ env.TARGET_PATH }}
           asset_name: ${{ env.ASSET_NAME }}
           asset_content_type: application/octet-stream
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ env.ASSET_NAME }}.sha256sum.txt
+          path: sha256sum.txt
+
   finish-release:
     name: finish-release
     needs: ["build-release"]
     runs-on: ubuntu-latest
     steps:
       - name: Get release download URL
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v2
         with:
           name: artifacts
           path: artifacts
@@ -165,7 +182,7 @@ jobs:
           sha256sum * > ./../artifacts/sha256sum.txt
           cd ..
       - name: Upload artifacts
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         with:
           name: artifacts
           path: artifacts
