@@ -33,7 +33,6 @@ jobs:
         run: echo "${{ steps.release.outputs.upload_url }}" > artifacts/release-upload-url
       - name: Save version number to artifact
         run: echo "${{ env.VERSION }}" > artifacts/release-version
-
       - name: Upload artifacts
         uses: actions/upload-artifact@v1
         with:
@@ -141,3 +140,32 @@ jobs:
           asset_path: ${{ env.TARGET_PATH }}
           asset_name: ${{ env.ASSET_NAME }}
           asset_content_type: application/octet-stream
+  finish-release:
+    name: finish-release
+    needs: ["build-release"]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get release download URL
+        uses: actions/download-artifact@v1
+        with:
+          name: artifacts
+          path: artifacts
+      - name: mac-checksum
+        shell: bash
+        run: |
+          release_version="$(cat artifacts/release-version)"
+          echo "RELEASE_VERSION=${release_version}" >> $GITHUB_ENV
+
+          release_url="https://github.com/tshauck/brrrr/releases/download/${release_version}/brrrr-${release_version}-x86_64-apple-darwin"
+
+          mkdir executables
+          cd executables
+
+          wget -O brrrr-${release_version}-x86_64-apple-darwin ${release_url}
+          sha256sum * > ./../artifacts/sha256sum.txt
+          cd ..
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v1
+        with:
+          name: artifacts
+          path: artifacts
