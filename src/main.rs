@@ -29,7 +29,7 @@ enum GeneratorChoice {
     name = "brrrr",
     about = "Convert biology and chemistry domain formats into common formats.",
     author = "Trent Hauck <trent@trenthauck.com>",
-    version = "0.7.1"
+    version = "0.7.2"
 )]
 enum Brrrr {
     #[clap(name = "fa2jsonl", about = "Converts a FASTA input to jsonl.")]
