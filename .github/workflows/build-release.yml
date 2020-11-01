@@ -6,8 +6,8 @@ on:
       - "v*"
 
 jobs:
-  create-release:
-    name: create-release
+  pre-flight:
+    name: pre-flight
     runs-on: ubuntu-latest
     steps:
       - name: Dump env
@@ -20,17 +20,6 @@ jobs:
         run: mkdir artifacts
       - name: Set env
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-      - name: Create GitHub release
-        id: release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ env.VERSION }}
-          release_name: ${{ env.VERSION }}
-          draft: true
-      - name: Save release upload URL to artifact
-        run: echo "${{ steps.release.outputs.upload_url }}" > artifacts/release-upload-url
       - name: Save version number to artifact
         run: echo "${{ env.VERSION }}" > artifacts/release-version
       - name: Upload artifacts
@@ -40,11 +29,12 @@ jobs:
           path: artifacts
   build-release:
     name: build-release
-    needs: ["create-release"]
+    needs: ["pre-flight"]
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        build: [macos-x86, linux-x86, linux-arm, win-msvc]
+        #build: [macos-x86, linux-x86, linux-arm, win-msvc]
+        build: [macos-x86]
         include:
           - build: macos-x86
             os: macos-latest
@@ -103,7 +93,7 @@ jobs:
         if: matrix.build == 'linux-x86' || matrix.build == 'macos-x86'
         run: strip "target/${{ matrix.target }}/release/brrrr"
 
-      - name: Get release download URL
+      - name: Get release version
         uses: actions/download-artifact@v2
         with:
           name: artifacts
@@ -112,11 +102,7 @@ jobs:
       - name: Prepare for Upload
         shell: bash
         run: |
-          release_upload_url="$(cat artifacts/release-upload-url)"
-          echo "RELEASE_UPLOAD_URL=${release_upload_url}" >> $GITHUB_ENV
-
           release_version="$(cat artifacts/release-version)"
-          echo "RELEASE_VERSION=${release_version}" >> $GITHUB_ENV
 
           if [ "${{ matrix.os }}" = "windows-2019" ]; then
               target_path="target/${{ matrix.target }}/release/brrrr.exe"
@@ -126,71 +112,114 @@ jobs:
               asset_name="brrrr-${release_version}-${{ matrix.target }}"
           fi
 
+          if [ "${{ matrix.os }}" = "windows-2019" ]; then
+              sha=$(sha256sum ${target_path} | cut -d " " -f 1)
+              echo "${sha} brrrr-${release_version}-${{ matrix.target }}.exe" > sha256sum.txt
+
+          elif [ "${{ matrix.os }}" == "macos-latest" ]; then
+              sha=$(shasum -a 256 ${target_path} | cut -d " " -f 1)
+              echo "${sha} brrrr-${release_version}-${{ matrix.target }}" > sha256sum.txt
+
+          else
+              sha=$(sha256sum ${target_path} | cut -d " " -f 1)
+              echo "${sha} brrrr-${release_version}-${{ matrix.target }}" > sha256sum.txt
+          fi
+
           echo "TARGET_PATH=${target_path}" >> $GITHUB_ENV
           echo "ASSET_NAME=${asset_name}" >> $GITHUB_ENV
 
-          env | sort
+          mkdir "${asset_name}"
+          mv sha256sum.txt "${asset_name}"/sha256sum.txt
+          mv ${target_path} "${asset_name}"/"${asset_name}"
 
-          if [ "${{ matrix.os }}" = "windows-2019" ]; then
-              target_path="target/${{ matrix.target }}/release/brrrr.exe"
-              asset_name="brrrr-${release_version}-${{ matrix.target }}.exe"
-          elif [[ "${{ matrix.os }}" == "macos-latest" ]; then
-              sha=$(shasum -a 256 ${target_path} | cut -d " " -f 1)
-              echo "${sha} brrrr-${release_version}-${{ matrix.target }}" > "$ASSET_NAME".sha256sum.txt
-          else
-              sha=$(sha256sum ${target_path} | cut -d " " -f 1)
-              echo "${sha} brrrr-${release_version}-${{ matrix.target }}" > "$ASSET_NAME".sha256sum.txt
-          fi
-
-      - name: Upload artifacts
+      - name: Upload executable artifact
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ env.ASSET_NAME }}.sha256sum.txt
-          path: ${{ env.ASSET_NAME }}.sha256sum.txt
-
-      - name: Upload Release Asset
-        id: upload-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
-          asset_path: ${{ env.TARGET_PATH }}
-          asset_name: ${{ env.ASSET_NAME }}
-          asset_content_type: application/octet-stream
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: ${{ env.ASSET_NAME }}.sha256sum.txt
-          path: sha256sum.txt
+          name: ${{ env.ASSET_NAME }}
+          path: ${{ env.ASSET_NAME }}
+          if-no-files-found: error
 
   finish-release:
     name: finish-release
     needs: ["build-release"]
     runs-on: ubuntu-latest
     steps:
-      - name: Get release download URL
-        uses: actions/download-artifact@v2
+      - name: Checkout repository
+        uses: actions/checkout@v2
         with:
-          name: artifacts
-          path: artifacts
-      - name: mac-checksum
+          fetch-depth: 1
+      - name: Set up Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: "3.7"
+      - uses: actions/download-artifact@v2
+        with:
+          path: generated-artifacts
+      - name: Generate Release
         shell: bash
         run: |
-          release_version="$(cat artifacts/release-version)"
+          python -m pip install --upgrade pip
+          pip install commitizen
+
+          release_version="$(cat generated-artifacts/artifacts/release-version)"
           echo "RELEASE_VERSION=${release_version}" >> $GITHUB_ENV
 
-          release_url="https://github.com/tshauck/brrrr/releases/download/${release_version}/brrrr-${release_version}-x86_64-apple-darwin"
-
-          mkdir executables
-          cd executables
-
-          wget -O brrrr-${release_version}-x86_64-apple-darwin ${release_url}
-          sha256sum * > ./../artifacts/sha256sum.txt
-          cd ..
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v2
+          cz ch > RELEASE.md
+          echo "" >> RELEASE.md
+          echo "\`\`\`" >> RELEASE.md
+          cat ./generated-artifacts/brrrr-${release_version}-aarch64-unknown-linux-gnu/sha256sum.txt >> RELEASE.md
+          cat ./generated-artifacts/brrrr-${release_version}-x86_64-apple-darwin/sha256sum.txt >> RELEASE.md
+          cat ./generated-artifacts/brrrr-${release_version}-x86_64-pc-windows-msvc.exe/sha256sum.txt >> RELEASE.md
+          cat ./generated-artifacts/brrrr-${release_version}-x86_64-unknown-linux-musl/sha256sum.txt >> RELEASE.md
+          echo "\`\`\`" >> RELEASE.md
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
         with:
-          name: artifacts
-          path: artifacts
+          tag_name: ${{ env.RELEASE_VERSION }}
+          release_name: Release ${{ env.RELEASE_VERSION }}
+          body_path: RELEASE.md
+          draft: false
+          prerelease: false
+      - name: Upload Release Asset (aarch64-unknown-linux-gnu)
+        id: upload-release-asset-aarch64-unknown-linux-gnu
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./generated-artifacts/brrrr-${{ env.RELEASE_VERSION }}-aarch64-unknown-linux-gnu/brrrr-${{ env.RELEASE_VERSION }}-aarch64-unknown-linux-gnu
+          asset_name: brrrr-${{ env.RELEASE_VERSION }}-aarch64-unknown-linux-gnu
+          asset_content_type: application/octet-stream
+      - name: Upload Release Asset (x86_64-unknown-linux-musl)
+        id: upload-release-asset-x86_64-unknown-linux-musl
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./generated-artifacts/brrrr-${{ env.RELEASE_VERSION }}-x86_64-unknown-linux-musl/brrrr-${{ env.RELEASE_VERSION }}-x86_64-unknown-linux-musl
+          asset_name: brrrr-${{ env.RELEASE_VERSION }}-x86_64-unknown-linux-musl
+          asset_content_type: application/octet-stream
+      - name: Upload Release Asset (x86_64-pc-windows-msvc)
+        id: upload-release-asset-x86_64-pc-windows-msvc
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./generated-artifacts/brrrr-${{ env.RELEASE_VERSION }}-x86_64-pc-windows-msvc.exe/brrrr-${{ env.RELEASE_VERSION }}-x86_64-pc-windows-msvc.exe
+          asset_name: brrrr-${{ env.RELEASE_VERSION }}-x86_64-pc-windows-msvc.exe
+          asset_content_type: application/octet-stream
+      - name: Upload Release Asset (x86_64-apple-darwin)
+        id: upload-release-asset-x86_64-apple-darwin
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./generated-artifacts/brrrr-${{ env.RELEASE_VERSION }}-x86_64-apple-darwin/brrrr-${{ env.RELEASE_VERSION }}-x86_64-apple-darwin
+          asset_name: brrrr-${{ env.RELEASE_VERSION }}-x86_64-apple-darwin
+          asset_content_type: application/octet-stream
