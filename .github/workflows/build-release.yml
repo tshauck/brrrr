@@ -104,39 +104,48 @@ jobs:
         run: |
           release_version="$(cat artifacts/release-version)"
 
+          ARCHIVE_DIR=archive
+          mkdir "$ARCHIVE_DIR"
+
           if [ "${{ matrix.os }}" = "windows-2019" ]; then
               target_path="target/${{ matrix.target }}/release/brrrr.exe"
-              asset_name="brrrr-${release_version}-${{ matrix.target }}.exe"
+              asset_name="brrrr-${release_version}-${{ matrix.target }}.exe.zip"
+
+              cp ${target_path} $ARCHIVE_DIR/
+              7z -y a "${asset_name}" "$ARCHIVE_DIR"/*
           else
               target_path="target/${{ matrix.target }}/release/brrrr"
-              asset_name="brrrr-${release_version}-${{ matrix.target }}"
+              asset_name="brrrr-${release_version}-${{ matrix.target }}.tar.gz"
+
+              cp ${target_path} $ARCHIVE_DIR/
+              tar czf "${asset_name}" "$ARCHIVE_DIR"/*
           fi
 
           if [ "${{ matrix.os }}" = "windows-2019" ]; then
-              sha=$(sha256sum ${target_path} | cut -d " " -f 1)
-              echo "${sha} brrrr-${release_version}-${{ matrix.target }}.exe" > sha256sum.txt
+              sha=$(sha256sum ${asset_name} | cut -d " " -f 1)
+              echo "${sha} ${asset_name}" > sha256sum.txt
 
           elif [ "${{ matrix.os }}" == "macos-latest" ]; then
               sha=$(shasum -a 256 ${target_path} | cut -d " " -f 1)
-              echo "${sha} brrrr-${release_version}-${{ matrix.target }}" > sha256sum.txt
+              echo "${sha} ${asset_name}" > sha256sum.txt
 
           else
               sha=$(sha256sum ${target_path} | cut -d " " -f 1)
-              echo "${sha} brrrr-${release_version}-${{ matrix.target }}" > sha256sum.txt
+              echo "${sha} ${asset_name}" > sha256sum.txt
           fi
 
           echo "TARGET_PATH=${target_path}" >> $GITHUB_ENV
           echo "ASSET_NAME=${asset_name}" >> $GITHUB_ENV
 
-          mkdir "${asset_name}"
-          mv sha256sum.txt "${asset_name}"/sha256sum.txt
-          mv ${target_path} "${asset_name}"/"${asset_name}"
+          mkdir "${asset_name}-folder"
+          mv sha256sum.txt "${asset_name}-folder"/sha256sum.txt
+          mv ${target_path} "${asset_name}-folder"/"${asset_name}"
 
       - name: Upload executable artifact
         uses: actions/upload-artifact@v2
         with:
           name: ${{ env.ASSET_NAME }}
-          path: ${{ env.ASSET_NAME }}
+          path: ${{ env.ASSET_NAME }}-folder
           if-no-files-found: error
 
   finish-release:
@@ -161,16 +170,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install commitizen
 
+          ls -R generated-artifacts
+
           release_version="$(cat generated-artifacts/artifacts/release-version)"
           echo "RELEASE_VERSION=${release_version}" >> $GITHUB_ENV
 
           cz ch > RELEASE.md
           echo "" >> RELEASE.md
           echo "\`\`\`" >> RELEASE.md
-          cat ./generated-artifacts/brrrr-${release_version}-aarch64-unknown-linux-gnu/sha256sum.txt >> RELEASE.md
-          cat ./generated-artifacts/brrrr-${release_version}-x86_64-apple-darwin/sha256sum.txt >> RELEASE.md
-          cat ./generated-artifacts/brrrr-${release_version}-x86_64-pc-windows-msvc.exe/sha256sum.txt >> RELEASE.md
-          cat ./generated-artifacts/brrrr-${release_version}-x86_64-unknown-linux-musl/sha256sum.txt >> RELEASE.md
+          cat ./generated-artifacts/brrrr-${release_version}-aarch64-unknown-linux-gnu.tar.gz/sha256sum.txt >> RELEASE.md
+          cat ./generated-artifacts/brrrr-${release_version}-x86_64-apple-darwin.tar.gz/sha256sum.txt >> RELEASE.md
+          cat ./generated-artifacts/brrrr-${release_version}-x86_64-pc-windows-msvc.exe.zip/sha256sum.txt >> RELEASE.md
+          cat ./generated-artifacts/brrrr-${release_version}-x86_64-unknown-linux-musl.tar.gz/sha256sum.txt >> RELEASE.md
           echo "\`\`\`" >> RELEASE.md
       - name: Create Release
         id: create_release
@@ -190,19 +201,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./generated-artifacts/brrrr-${{ env.RELEASE_VERSION }}-aarch64-unknown-linux-gnu/brrrr-${{ env.RELEASE_VERSION }}-aarch64-unknown-linux-gnu
-          asset_name: brrrr-${{ env.RELEASE_VERSION }}-aarch64-unknown-linux-gnu
-          asset_content_type: application/octet-stream
-      - name: Upload Release Asset (x86_64-unknown-linux-musl)
-        id: upload-release-asset-x86_64-unknown-linux-musl
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./generated-artifacts/brrrr-${{ env.RELEASE_VERSION }}-x86_64-unknown-linux-musl/brrrr-${{ env.RELEASE_VERSION }}-x86_64-unknown-linux-musl
-          asset_name: brrrr-${{ env.RELEASE_VERSION }}-x86_64-unknown-linux-musl
-          asset_content_type: application/octet-stream
+          asset_path: ./generated-artifacts/brrrr-${{ env.RELEASE_VERSION }}-aarch64-unknown-linux-gnu.tar.gz/brrrr-${{ env.RELEASE_VERSION }}-aarch64-unknown-linux-gnu.tar.gz
+          asset_name: brrrr-${{ env.RELEASE_VERSION }}-aarch64-unknown-linux-gnu.tar.gz
+          asset_content_type: application/gzip
       - name: Upload Release Asset (x86_64-pc-windows-msvc)
         id: upload-release-asset-x86_64-pc-windows-msvc
         uses: actions/upload-release-asset@v1
@@ -210,9 +211,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./generated-artifacts/brrrr-${{ env.RELEASE_VERSION }}-x86_64-pc-windows-msvc.exe/brrrr-${{ env.RELEASE_VERSION }}-x86_64-pc-windows-msvc.exe
-          asset_name: brrrr-${{ env.RELEASE_VERSION }}-x86_64-pc-windows-msvc.exe
-          asset_content_type: application/octet-stream
+          asset_path: ./generated-artifacts/brrrr-${{ env.RELEASE_VERSION }}-x86_64-pc-windows-msvc.exe.zip/brrrr-${{ env.RELEASE_VERSION }}-x86_64-pc-windows-msvc.exe.zip
+          asset_name: brrrr-${{ env.RELEASE_VERSION }}-x86_64-pc-windows-msvc.exe.zip
+          asset_content_type: application/zip
       - name: Upload Release Asset (x86_64-apple-darwin)
         id: upload-release-asset-x86_64-apple-darwin
         uses: actions/upload-release-asset@v1
@@ -220,6 +221,16 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./generated-artifacts/brrrr-${{ env.RELEASE_VERSION }}-x86_64-apple-darwin/brrrr-${{ env.RELEASE_VERSION }}-x86_64-apple-darwin
-          asset_name: brrrr-${{ env.RELEASE_VERSION }}-x86_64-apple-darwin
-          asset_content_type: application/octet-stream
+          asset_path: ./generated-artifacts/brrrr-${{ env.RELEASE_VERSION }}-x86_64-apple-darwin.tar.gz/brrrr-${{ env.RELEASE_VERSION }}-x86_64-apple-darwin.tar.gz
+          asset_name: brrrr-${{ env.RELEASE_VERSION }}-x86_64-apple-darwin.tar.gz
+          asset_content_type: application/gzip
+      - name: Upload Release Asset (x86_64-unknown-linux-musl)
+        id: upload-release-asset-x86_64-unknown-linux-musl
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./generated-artifacts/brrrr-${{ env.RELEASE_VERSION }}-x86_64-unknown-linux-musl.tar.gz/brrrr-${{ env.RELEASE_VERSION }}-x86_64-unknown-linux-musl.tar.gz
+          asset_name: brrrr-${{ env.RELEASE_VERSION }}-x86_64-unknown-linux-musl.tar.gz
+          asset_content_type: application/gzip
