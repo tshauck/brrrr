@@ -111,14 +111,14 @@ jobs:
               target_path="target/${{ matrix.target }}/release/brrrr.exe"
               asset_name="brrrr-${release_version}-${{ matrix.target }}.exe.zip"
 
-              cp ${target_path} $ARCHIVE_DIR/
-              7z -y a "${asset_name}" "$ARCHIVE_DIR"/*
+              cp ${target_path} $ARCHIVE_DIR
+              7z -y a "${asset_name}" "$ARCHIVE_DIR"
           else
               target_path="target/${{ matrix.target }}/release/brrrr"
               asset_name="brrrr-${release_version}-${{ matrix.target }}.tar.gz"
 
-              cp ${target_path} $ARCHIVE_DIR/
-              tar czf "${asset_name}" "$ARCHIVE_DIR"/*
+              cp ${target_path} $ARCHIVE_DIR
+              tar czvf "${asset_name}" -C "target/${{ matrix.target }}/release" "brrrr"
           fi
 
           if [ "${{ matrix.os }}" = "windows-2019" ]; then
@@ -126,11 +126,11 @@ jobs:
               echo "${sha} ${asset_name}" > sha256sum.txt
 
           elif [ "${{ matrix.os }}" == "macos-latest" ]; then
-              sha=$(shasum -a 256 ${target_path} | cut -d " " -f 1)
+              sha=$(shasum -a 256 ${asset_name} | cut -d " " -f 1)
               echo "${sha} ${asset_name}" > sha256sum.txt
 
           else
-              sha=$(sha256sum ${target_path} | cut -d " " -f 1)
+              sha=$(sha256sum ${asset_name} | cut -d " " -f 1)
               echo "${sha} ${asset_name}" > sha256sum.txt
           fi
 
@@ -139,7 +139,7 @@ jobs:
 
           mkdir "${asset_name}-folder"
           mv sha256sum.txt "${asset_name}-folder"/sha256sum.txt
-          mv ${target_path} "${asset_name}-folder"/"${asset_name}"
+          mv ${asset_name} "${asset_name}-folder"/"${asset_name}"
 
       - name: Upload executable artifact
         uses: actions/upload-artifact@v2
