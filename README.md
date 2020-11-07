@@ -11,7 +11,24 @@ file formats.
 
 ## Usage
 
-For a self-contained example script, see examples.sh.
+For a self-contained example script, see [examples.sh]. But as a quick example,
+say you have a fasta file and would like to convert it to json.
+
+```console
+$ echo ">1\nATCG\n>2\nTAGC\n" | brrrr fa2jsonl | jq
+{
+  "id": "1",
+  "desc": null,
+  "seq": "ATCG"
+}
+{
+  "id": "2",
+  "desc": null,
+  "seq": "TAGC"
+}
+```
+
+For the CLI help screen.
 
 ```console
 $ brrrr --help
@@ -49,3 +66,5 @@ Executables are built for:
 
 Download the executable from github's
 [release](https://github.com/tshauck/brrrr/releases) page.
+
+[examples.sh]: https://github.com/tshauck/brrrr/blob/master/examples.sh
