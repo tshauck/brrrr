@@ -4,11 +4,13 @@
 use std::fs::File;
 use std::io::{stdin, stdout, Result};
 use std::path::PathBuf;
+use std::str;
 
 use bio::io::gff;
 use clap::{App, Clap, IntoApp};
 
 mod json_writer;
+mod parquet_writer;
 mod writer;
 
 use clap_generate::generators::{Bash, Fish, PowerShell, Zsh};
@@ -32,6 +34,20 @@ enum GeneratorChoice {
     version = "0.7.4"
 )]
 enum Brrrr {
+    #[clap(name = "fa2pq", about = "Converts a FASTA input to parquet.")]
+    Fa2pq {
+        /// The path where the input should be read from.
+        input_file_name: String,
+        /// The path where the output should be written to.
+        output_file_name: String,
+    },
+    #[clap(name = "fq2pq", about = "Converts a FASTQ input to parquet.")]
+    Fq2pq {
+        /// The path where the input should be read from.
+        input_file_name: String,
+        /// The path where the output should be written to.
+        output_file_name: String,
+    },
     #[clap(name = "fa2jsonl", about = "Converts a FASTA input to jsonl.")]
     Fa2jsonl {
         #[clap(parse(from_os_str))]
@@ -71,6 +87,14 @@ fn main() -> Result<()> {
                 json_writer::fa2jsonl(f, stdout())
             }
         },
+        Brrrr::Fa2pq {
+            input_file_name,
+            output_file_name,
+        } => parquet_writer::fa2pq(input_file_name.as_str(), output_file_name.as_str()),
+        Brrrr::Fq2pq {
+            input_file_name,
+            output_file_name,
+        } => parquet_writer::fq2pq(input_file_name.as_str(), output_file_name.as_str()),
         Brrrr::Gff2jsonl { input, gff_type } => match input {
             None => json_writer::gff2jsonl(stdin(), stdout(), gff_type),
             Some(input) => {
