@@ -33,8 +33,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        #build: [macos-x86, linux-x86, linux-arm, win-msvc]
-        build: [macos-x86]
+        build: [macos-x86, linux-x86, linux-arm, win-msvc]
         include:
           - build: macos-x86
             os: macos-latest

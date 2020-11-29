@@ -29,7 +29,7 @@ enum GeneratorChoice {
 #[derive(Clap)]
 #[clap(
     name = "brrrr",
-    about = "Convert biology and chemistry domain formats into common formats.",
+    about = "Commandline utilities for modern biology and chemistry informatics.",
     author = "Trent Hauck <trent@trenthauck.com>",
     version = "0.7.4"
 )]

@@ -26,6 +26,7 @@ pub fn fa2pq(input: &str, output: &str) -> Result<()> {
     let file_schema = Schema::new(vec![
         Field::new("id", DataType::Utf8, false),
         Field::new("sequence", DataType::Utf8, false),
+        Field::new("description", DataType::Utf8, true),
     ]);
 
     let input_file = fs::File::open(input).expect("Error opening file.");
@@ -39,6 +40,7 @@ pub fn fa2pq(input: &str, output: &str) -> Result<()> {
     let chunk_size = 2usize.pow(20);
     for chunk in records.into_iter().chunks(chunk_size).into_iter() {
         let mut id_builder = StringBuilder::new(2048);
+        let mut description_builder = StringBuilder::new(2048);
         let mut seq_builder = StringBuilder::new(2048);
 
         for chunk_i in chunk {
@@ -51,6 +53,15 @@ pub fn fa2pq(input: &str, output: &str) -> Result<()> {
                 .append_value(record.id())
                 .expect("Couldn't append id.");
 
+            match record.desc() {
+                Some(x) => description_builder
+                    .append_value(x)
+                    .expect("Couldn't append description."),
+                _ => description_builder
+                    .append_null()
+                    .expect("Couldn't append null description."),
+            }
+
             let sequence = str::from_utf8(record.seq()).unwrap();
             seq_builder
                 .append_value(sequence)
@@ -58,11 +69,16 @@ pub fn fa2pq(input: &str, output: &str) -> Result<()> {
         }
 
         let id_array = id_builder.finish();
+        let desc_array = description_builder.finish();
         let seq_array = seq_builder.finish();
 
         let rb = RecordBatch::try_new(
             Arc::new(file_schema.clone()),
-            vec![Arc::new(id_array), Arc::new(seq_array)],
+            vec![
+                Arc::new(id_array),
+                Arc::new(desc_array),
+                Arc::new(seq_array),
+            ],
         )
         .unwrap();
 
@@ -82,6 +98,7 @@ pub fn fq2pq(input: &str, output: &str) -> Result<()> {
     let file_schema = Schema::new(vec![
         Field::new("id", DataType::Utf8, false),
         Field::new("sequence", DataType::Utf8, false),
+        Field::new("description", DataType::Utf8, true),
         Field::new("quality", DataType::Utf8, false),
     ]);
 
@@ -96,6 +113,7 @@ pub fn fq2pq(input: &str, output: &str) -> Result<()> {
     let chunk_size = 2usize.pow(20);
     for chunk in records.into_iter().chunks(chunk_size).into_iter() {
         let mut id_builder = StringBuilder::new(2048);
+        let mut description_builder = StringBuilder::new(2048);
         let mut seq_builder = StringBuilder::new(2048);
         let mut quality_builder = StringBuilder::new(2048);
 
@@ -109,6 +127,15 @@ pub fn fq2pq(input: &str, output: &str) -> Result<()> {
                 .append_value(record.id())
                 .expect("Couldn't append id.");
 
+            match record.desc() {
+                Some(x) => description_builder
+                    .append_value(x)
+                    .expect("Couldn't append description."),
+                _ => description_builder
+                    .append_null()
+                    .expect("Couldn't append null description."),
+            }
+
             let sequence = str::from_utf8(record.seq()).unwrap();
             seq_builder
                 .append_value(sequence)
@@ -121,12 +148,18 @@ pub fn fq2pq(input: &str, output: &str) -> Result<()> {
         }
 
         let id_array = id_builder.finish();
+        let desc_array = description_builder.finish();
         let seq_array = seq_builder.finish();
         let quality_array = quality_builder.finish();
 
         let rb = RecordBatch::try_new(
             Arc::new(file_schema.clone()),
-            vec![Arc::new(id_array), Arc::new(seq_array), Arc::new(quality_array)],
+            vec![
+                Arc::new(id_array),
+                Arc::new(desc_array),
+                Arc::new(seq_array),
+                Arc::new(quality_array),
+            ],
         )
         .unwrap();
 
