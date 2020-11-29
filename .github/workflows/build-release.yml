@@ -2,8 +2,9 @@ name: Build Release
 
 on:
   push:
-    tags:
-      - "v*"
+
+    #tags:
+    #- "v*"
 
 jobs:
   pre-flight:
@@ -18,8 +19,10 @@ jobs:
         run: echo "$GITHUB_CONTEXT"
       - name: Create artifacts directory
         run: mkdir artifacts
+      #- name: Set env
+        #run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
       - name: Set env
-        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+        run: echo "VERSION=v0.7.4a" >> $GITHUB_ENV
       - name: Save version number to artifact
         run: echo "${{ env.VERSION }}" > artifacts/release-version
       - name: Upload artifacts
@@ -33,13 +36,17 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        #build: [macos-x86, linux-x86, linux-arm, win-msvc]
-        build: [macos-x86]
+        #build: [macos-x86, macos-arm, linux-x86, linux-arm, win-msvc]
+        build: [macos-arm]
         include:
           - build: macos-x86
             os: macos-latest
             rust: nightly
             target: x86_64-apple-darwin
+          - build: macos-arm
+            os: macos-latest
+            rust: nightly
+            target: aarch64-apple-darwin
           - build: linux-x86
             os: ubuntu-18.04
             rust: nightly
@@ -84,7 +91,7 @@ jobs:
       - name: Build release binary
         run: task prod-release TARGET=${{ matrix.target }}
 
-      - name: Strip release binary (arm)
+      - name: Strip release binary (linus arm)
         if: matrix.build == 'linux-arm'
         run: |
           docker run --rm -v $PWD/target:/target:Z rustembedded/cross:${{ matrix.target }} aarch64-linux-gnu-strip /target/${{ matrix.target}}/release/brrrr
