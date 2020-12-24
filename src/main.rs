@@ -9,6 +9,7 @@ use std::str;
 use bio::io::gff;
 use clap::{App, Clap, IntoApp};
 
+mod tokenizer;
 mod json_writer;
 mod parquet_writer;
 mod writer;
@@ -72,6 +73,11 @@ enum Brrrr {
         #[clap(short, long, arg_enum)]
         gen_type: GeneratorChoice,
     },
+    #[clap(name = "train-tokenize", about = "Tokenize the code.")]
+    TrainTokenize {
+        #[clap(parse(from_os_str))]
+        input: PathBuf,
+    }
 }
 
 fn print_completions<G: Generator>(app: &mut App) {
@@ -80,6 +86,10 @@ fn print_completions<G: Generator>(app: &mut App) {
 
 fn main() -> Result<()> {
     match Brrrr::parse() {
+        Brrrr::TrainTokenize { input } => {
+            let f = File::open(input).expect("Error opening file.");
+            tokenizer::train_tokenizer(f)
+        },
         Brrrr::Fa2jsonl { input } => match input {
             None => json_writer::fa2jsonl(stdin(), stdout()),
             Some(input) => {
