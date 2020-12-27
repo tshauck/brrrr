@@ -4,6 +4,6 @@ version = "0.7.4"
 tag_format = "v$version"
 version_files = [
   "./brrrr/Cargo.toml:version",
-  "./brrrr/src/main.rs:version"
+  "./brrrr/src/main.rs:version",
   "./brrrr-lib/Cargo.toml:version",
 ]
