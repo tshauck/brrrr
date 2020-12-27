@@ -1,0 +1,21 @@
+[package]
+authors = ["Trent Hauck <trent@trenthauck.com>"]
+edition = "2018"
+name = "brrrr-lib"
+version = "0.7.4"
+
+[dependencies]
+arrow = {git = "https://github.com/apache/arrow"}
+bio = {git = "https://github.com/rust-bio/rust-bio"}
+itertools = "0.9.0"
+parquet = {git = "https://github.com/apache/arrow"}
+serde = {version = "1.0", features = ["derive"]}
+serde_json = "1.0"
+tokenizers = {git = "https://github.com/huggingface/tokenizers"}
+
+[dev-dependencies]
+criterion = "0.3"
+
+[[bench]]
+harness = false
+name = "read_fasta"

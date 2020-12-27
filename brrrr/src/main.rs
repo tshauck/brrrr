@@ -9,10 +9,8 @@ use std::str;
 use bio::io::gff;
 use clap::{App, Clap, IntoApp};
 
-mod tokenizer;
-mod json_writer;
-mod parquet_writer;
-mod writer;
+use brrrr_lib::json_writer;
+use brrrr_lib::parquet_writer;
 
 use clap_generate::generators::{Bash, Fish, PowerShell, Zsh};
 use clap_generate::{generate, Generator};
@@ -88,7 +86,8 @@ fn main() -> Result<()> {
     match Brrrr::parse() {
         Brrrr::TrainTokenize { input } => {
             let f = File::open(input).expect("Error opening file.");
-            tokenizer::train_tokenizer(f)
+            // tokenizer::train_tokenizer(f)
+            Ok(())
         },
         Brrrr::Fa2jsonl { input } => match input {
             None => json_writer::fa2jsonl(stdin(), stdout()),

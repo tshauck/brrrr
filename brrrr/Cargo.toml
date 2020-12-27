@@ -1,0 +1,18 @@
+[package]
+authors = ["Trent Hauck <trent@trenthauck.com>"]
+edition = "2018"
+name = "brrrr"
+version = "0.7.4"
+
+[[bin]]
+name = "brrrr"
+path = "src/main.rs"
+
+[dependencies]
+brrrr-lib = {path = "../brrrr-lib"}
+clap = "3.0.0-beta.2"
+clap_generate = {version = "3.0.0-beta.2"}
+bio = {git = "https://github.com/rust-bio/rust-bio"}
+
+[dev-dependencies]
+assert_cmd = "1.0.1"
