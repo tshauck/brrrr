@@ -9,9 +9,8 @@ use std::str;
 use bio::io::gff;
 use clap::{App, Clap, IntoApp};
 
-mod json_writer;
-mod parquet_writer;
-mod writer;
+use brrrr_lib::json_writer;
+use brrrr_lib::parquet_writer;
 
 use clap_generate::generators::{Bash, Fish, PowerShell, Zsh};
 use clap_generate::{generate, Generator};

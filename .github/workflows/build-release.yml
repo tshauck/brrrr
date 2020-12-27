@@ -62,7 +62,7 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Install linux depdencies
+      - name: Install linux dependencies
         if: matrix.build == 'linux-x86'
         run: |
           sudo apt-get update
