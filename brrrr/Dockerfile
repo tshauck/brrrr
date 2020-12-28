@@ -6,6 +6,6 @@ COPY . .
 
 RUN cargo build --release
 
-RUN cargo install --path .
+RUN cargo install --path ./brrrr
 
 ENTRYPOINT ["/usr/local/cargo/bin/brrrr"]
