@@ -18,3 +18,7 @@ criterion = "0.3"
 [[bench]]
 harness = false
 name = "read_fasta"
+
+[[example]]
+name = "hello_world_parquet"
+path = "examples/fa2jsonl.rs"
