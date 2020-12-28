@@ -80,10 +80,10 @@ fn print_completions<G: Generator>(app: &mut App) {
 fn main() -> Result<()> {
     match Brrrr::parse() {
         Brrrr::Fa2jsonl { input } => match input {
-            None => json_writer::fa2jsonl(stdin(), stdout()),
+            None => json_writer::fa2jsonl(stdin(), &mut stdout()),
             Some(input) => {
                 let f = File::open(input).expect("Error opening file.");
-                json_writer::fa2jsonl(f, stdout())
+                json_writer::fa2jsonl(f, &mut stdout())
             }
         },
         Brrrr::Fa2pq {
@@ -95,17 +95,17 @@ fn main() -> Result<()> {
             output_file_name,
         } => parquet_writer::fq2pq(input_file_name.as_str(), output_file_name.as_str()),
         Brrrr::Gff2jsonl { input, gff_type } => match input {
-            None => json_writer::gff2jsonl(stdin(), stdout(), gff_type),
+            None => json_writer::gff2jsonl(stdin(), &mut stdout(), gff_type),
             Some(input) => {
                 let f = File::open(input).expect("Error opening file.");
-                json_writer::gff2jsonl(f, stdout(), gff_type)
+                json_writer::gff2jsonl(f, &mut stdout(), gff_type)
             }
         },
         Brrrr::Fq2jsonl { input } => match input {
-            None => json_writer::fq2jsonl(stdin(), stdout()),
+            None => json_writer::fq2jsonl(stdin(), &mut stdout()),
             Some(input) => {
                 let f = File::open(input).expect("Error opening file.");
-                json_writer::fq2jsonl(f, stdout())
+                json_writer::fq2jsonl(f, &mut stdout())
             }
         },
         Brrrr::Completion { gen_type } => {

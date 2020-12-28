@@ -18,7 +18,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         b.iter(|| {
             let filename = format!("./{}/10000.fasta", path);
             let f = File::open(filename).expect("Error opening file.");
-            let _ = brrrr_lib::json_writer::fa2jsonl(f, sink());
+            let _ = brrrr_lib::json_writer::fa2jsonl(f, &mut sink());
         })
     });
 }
