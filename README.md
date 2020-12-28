@@ -3,13 +3,18 @@
 Fast command line tool to process biological sequences and annotations to modern
 file formats.
 
-- [Usage](#usage)
-- [Installation](#installation)
-  - [Homebrew](#homebrew)
+- [brrrr](#brrrr)
+  - [Usage](#usage)
+  - [Installation](#installation)
   - [Docker](#docker)
   - [GitHub Releases](#github-releases)
+- [brrrr-lib](#brrrr-lib)
 
-## Usage
+
+## brrrr
+
+The CLI exposes many of the related `brrrr` functionality through a command line interface. `brrrr-lib` is intended for use in other modules.
+### Usage
 
 For a self-contained example script, see [examples.sh]. But as a quick example,
 say you have a FASTA file and would like to convert it to json.
@@ -34,18 +39,10 @@ For the CLI help screen.
 $ brrrr --help
 ```
 
-## Installation
+### Installation
 
-There are a few different ways to install brrrr.
-
-### Homebrew
-
-For Macs, brew can be used.
-
-```console
-$ brew tap tshauck/brrrr
-$ brew install brrrr
-```
+The `brrrr` cli can be install one of two ways, either through Docker or by
+getting an executable via GitHub's release page.
 
 ### Docker
 
@@ -68,3 +65,12 @@ Download the executable from GitHub's
 [release](https://github.com/tshauck/brrrr/releases) page.
 
 [examples.sh]: https://github.com/tshauck/brrrr/blob/master/examples.sh
+
+## brrrr-lib
+
+`brrrr-lib` can be added to `Cargo.toml` to import the module.
+
+```toml
+[dependencies]
+brrrr-lib = { git = "https://github.com/tshauck/brrrr", tag = "v1.2.3" }
+```
