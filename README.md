@@ -1,18 +1,18 @@
-# brrrr <a href='https://github.com/tshauck/brrrr'><img src='docs/brrrr-logo.png' align="right" height="150" /></a>
+# brrrr <a href='https://github.com/tshauck/brrrr'><img src='brrrr/docs/brrrr-logo.png' align="right" height="150" /></a>
 
 Fast command line tool to process biological sequences and annotations to modern
 file formats.
 
 - [Usage](#usage)
 - [Installation](#installation)
-  - [Brew](#brew)
+  - [Homebrew](#homebrew)
   - [Docker](#docker)
-  - [Github Releases](#github-releases)
+  - [GitHub Releases](#github-releases)
 
 ## Usage
 
 For a self-contained example script, see [examples.sh]. But as a quick example,
-say you have a fasta file and would like to convert it to json.
+say you have a FASTA file and would like to convert it to json.
 
 ```console
 $ echo ">1\nATCG\n>2\nTAGC\n" | brrrr fa2jsonl | jq
@@ -55,7 +55,7 @@ Cross-platform builds are available from docker hub.
 $ docker pull thauck/brrrr
 ```
 
-### Github Releases
+### GitHub Releases
 
 Executables are built for:
 
@@ -64,7 +64,7 @@ Executables are built for:
 - `aarch64-unknown-linux-gnu`
 - `x86_64-pc-windows-msvc`
 
-Download the executable from github's
+Download the executable from GitHub's
 [release](https://github.com/tshauck/brrrr/releases) page.
 
 [examples.sh]: https://github.com/tshauck/brrrr/blob/master/examples.sh
