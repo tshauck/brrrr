@@ -2,7 +2,7 @@
 authors = ["Trent Hauck <trent@trenthauck.com>"]
 edition = "2018"
 name = "brrrr-lib"
-version = "0.8.1"
+version = "0.8.2"
 
 [dependencies]
 arrow = {git = "https://github.com/apache/arrow"}
