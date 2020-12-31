@@ -1,8 +1,7 @@
 // (c) Copyright 2020 Trent Hauck
 // All Rights Reserved
 
-
-use nalgebra::{DMatrix, Matrix2};
+use nalgebra::DMatrix;
 use rand_distr::{Distribution, Gamma};
 use statrs::function::gamma::digamma;
 
@@ -15,7 +14,7 @@ pub struct OnlineLDA {
     exp_e_log_beta: DMatrix<f32>,
 }
 
-fn dirichlet_expectation(alpha: DMatrix<f32>) -> DMatrix<f32> {
+fn dirichlet_expectation(alpha: &DMatrix<f32>) -> DMatrix<f32> {
     let (rows, columns) = alpha.shape();
     let mut new_gamma = DMatrix::<f32>::zeros(rows, columns);
 
@@ -29,10 +28,8 @@ fn dirichlet_expectation(alpha: DMatrix<f32>) -> DMatrix<f32> {
 
         for j in 0..columns {
             new_gamma[(i, j)] = (digamma(alpha[(i, j)] as f64) as f32) - psi_sum;
-            println!("{:?} {:?}", new_gamma[(i, j)], psi_sum)
         }
     }
-    println!("new gamma {:?}", new_gamma);
     new_gamma
 }
 
@@ -57,8 +54,10 @@ impl OnlineLDA {
             }
         }
 
-        let mut e_log_theta = DMatrix::<f32>::zeros(batch_document_size, self.num_topics);
-        // let mut e_log_theta = dirichlet_expectation(gamma);
+        let e_log_theta = dirichlet_expectation(&gamma);
+        let exp_e_log_theta = e_log_theta.map(|f| f.exp());
+
+        let sstats = DMatrix::<f32>::zeros(self.num_topics, self.vocab_size);
 
         // For each document in the document batch.
         for document_i in 0..batch_document_size {
@@ -92,15 +91,12 @@ impl OnlineLDA {
 
 #[cfg(test)]
 mod tests {
-    use log::error;
-
     use super::*;
 
     #[ctor::ctor]
     fn init() {
         std::env::set_var("RUST_LOG", "trace");
         env_logger::init();
-        info!("HI");
     }
 
     #[test]
@@ -118,13 +114,17 @@ mod tests {
         let (rows, columns) = (2, 3);
         let dm = DMatrix::from_row_slice(rows, columns, &[1.0, 2.0, 3.0, 1.0, 3.0, 2.0]);
 
-        let actual = dirichlet_expectation(dm);
+        let actual = dirichlet_expectation(&dm);
         let expected = DMatrix::<f32>::from_row_slice(
             rows,
             columns,
             &[
-                -2.28333333, -1.28333333, - 0.78333333,
-                -2.28333333, -0.78333333, - 1.28333333,
+                -2.28333333,
+                -1.28333333,
+                -0.78333333,
+                -2.28333333,
+                -0.78333333,
+                -1.28333333,
             ],
         );
 
