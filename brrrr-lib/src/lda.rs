@@ -2,35 +2,34 @@
 // All Rights Reserved
 
 use nalgebra::DMatrix;
+use rand::prelude::ThreadRng;
 use rand_distr::{Distribution, Gamma};
 use statrs::function::gamma::digamma;
 
 use log::info;
 
+use crate::ldalib::{dirichlet_expectation, get_gamma_random_matrix};
+
+/// A struct for holding the state and training of an online LDA model.
 pub struct OnlineLDA {
+
+    /// The number of topics used during training, K.
     num_topics: usize,
+
+    ///  The overall number of documents in the corpus, D.
     num_documents: usize,
+
+    /// The vocabulary size of the data to be fit, W.
     vocab_size: usize,
-    exp_e_log_beta: DMatrix<f32>,
-}
 
-fn dirichlet_expectation(alpha: &DMatrix<f32>) -> DMatrix<f32> {
-    let (rows, columns) = alpha.shape();
-    let mut new_gamma = DMatrix::<f32>::zeros(rows, columns);
+    /// The lambda parameter of the variational distribution, q(beta|lambda).
+    lambda: DMatrix<f64>,
 
-    for i in 0..rows {
-        let row_i = alpha.row(i);
+    /// The exectation of the log of beta, given lambda.
+    e_log_beta: DMatrix<f64>,
 
-        // let row_i_psi = row_i.map(|f| digamma(f as f64));
-        let psi_sum = digamma(row_i.sum() as f64) as f32;
-
-        info!("For row {} got psi sum {}.", row_i, psi_sum);
-
-        for j in 0..columns {
-            new_gamma[(i, j)] = (digamma(alpha[(i, j)] as f64) as f32) - psi_sum;
-        }
-    }
-    new_gamma
+    /// The exponentiated expectation of beta, given lambda.
+    exp_e_log_beta: DMatrix<f64>,
 }
 
 impl OnlineLDA {
@@ -38,26 +37,30 @@ impl OnlineLDA {
         self.do_e_step(word_ids, word_counts);
     }
 
+    fn new(num_topics: usize, num_documents: usize, vocab_size: usize) -> OnlineLDA {
+        let lambda = get_gamma_random_matrix(num_topics, vocab_size);
+        let e_log_beta = dirichlet_expectation(&lambda);
+        let exp_e_log_beta = e_log_beta.map(|f| f.exp());
+
+        OnlineLDA {
+            num_topics: num_topics,
+            vocab_size: vocab_size,
+            num_documents: num_documents,
+            exp_e_log_beta: exp_e_log_beta,
+            lambda: lambda,
+            e_log_beta: e_log_beta,
+        }
+    }
+
     fn do_e_step(&self, word_ids: Vec<Vec<i32>>, word_counts: Vec<i32>) {
         let batch_document_size = word_ids.len();
 
-        let randr = rand::thread_rng();
-
-        // TODO: This might be a bad initialization.
-        let gamma_dist = Gamma::new(100.0, 1.0 / 100.0).unwrap();
-
         // Create the matrix for gamma, and fill it with random samples.
-        let mut gamma = DMatrix::<f32>::zeros(batch_document_size, self.num_topics);
-        for i in 0..batch_document_size {
-            for j in 0..self.num_topics {
-                gamma[(i, j)] = gamma_dist.sample(&mut rand::thread_rng());
-            }
-        }
-
+        let gamma = get_gamma_random_matrix(batch_document_size, self.num_topics);
         let e_log_theta = dirichlet_expectation(&gamma);
         let exp_e_log_theta = e_log_theta.map(|f| f.exp());
 
-        let sstats = DMatrix::<f32>::zeros(self.num_topics, self.vocab_size);
+        let sstats = DMatrix::<f64>::zeros(self.num_topics, self.vocab_size);
 
         // For each document in the document batch.
         for document_i in 0..batch_document_size {
@@ -75,16 +78,6 @@ impl OnlineLDA {
             for it in 0..100 {
                 let lastgamma = gamma_d;
             }
-        }
-    }
-
-    fn new(num_topics: usize, num_documents: usize, vocab_size: usize) -> OnlineLDA {
-        let exp_e_log_beta = DMatrix::<f32>::zeros(num_topics, vocab_size);
-        OnlineLDA {
-            num_topics: num_topics,
-            vocab_size: vocab_size,
-            num_documents: num_documents,
-            exp_e_log_beta: exp_e_log_beta,
         }
     }
 }
@@ -107,33 +100,6 @@ mod tests {
         let word_counts = word_ids.iter().map(|f| f.len() as i32).collect();
 
         old_lda.update_lambda(word_ids, word_counts);
-    }
-
-    #[test]
-    fn test_dirichlet_expectation() {
-        let (rows, columns) = (2, 3);
-        let dm = DMatrix::from_row_slice(rows, columns, &[1.0, 2.0, 3.0, 1.0, 3.0, 2.0]);
-
-        let actual = dirichlet_expectation(&dm);
-        let expected = DMatrix::<f32>::from_row_slice(
-            rows,
-            columns,
-            &[
-                -2.28333333,
-                -1.28333333,
-                -0.78333333,
-                -2.28333333,
-                -0.78333333,
-                -1.28333333,
-            ],
-        );
-
-        let (actual_rows, actual_columns) = actual.shape();
-        assert_eq!(actual_rows, rows);
-        assert_eq!(actual_columns, columns);
-
-        let eq = actual.eq(&expected);
-        assert!(eq);
     }
 
     #[test]

@@ -5,3 +5,4 @@ pub mod json_writer;
 pub mod parquet_writer;
 pub mod writer;
 pub mod lda;
+pub mod ldalib;
