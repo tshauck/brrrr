@@ -30,6 +30,9 @@ pub struct OnlineLDA {
 
     /// The exponentiated expectation of beta, given lambda.
     exp_e_log_beta: DMatrix<f64>,
+
+    /// The hyper parameter, alpha.
+    alpha: f64,
 }
 
 impl OnlineLDA {
@@ -49,6 +52,7 @@ impl OnlineLDA {
             exp_e_log_beta: exp_e_log_beta,
             lambda: lambda,
             e_log_beta: e_log_beta,
+            alpha: 1.0,
         }
     }
 
@@ -72,11 +76,12 @@ impl OnlineLDA {
             let e_log_theta_d = e_log_theta.row(document_i);
             let e_log_beta_d = self.exp_e_log_beta.row(document_i);
 
-            let phinorm = e_log_theta_d.dot(&e_log_beta_d);
+            let phinorm = e_log_theta_d.dot(&e_log_beta_d) + 1e-100;
 
             // https://github.com/blei-lab/onlineldavb/blob/dee5dcf9492d2b2870ba5c1fc14ac41cbf83596c/onlineldavb.py#L156-L170
             for it in 0..100 {
                 let lastgamma = gamma_d;
+
             }
         }
     }
