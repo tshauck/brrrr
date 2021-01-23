@@ -60,6 +60,13 @@ impl LDAState {
         self
     }
 
+    /// Blend together LDAState with other according to the weight, rhot.
+    fn blend(&mut self, other: &LDAState, rhot: f64) {
+        // TODO: Add targetsize from gensim impl, add tests
+        let new_stats = (&self.sufficient_stats * (1.0 - rhot)) + (rhot * &other.sufficient_stats);
+        self.with_sufficient_stats(&new_stats);
+    }
+
     fn reset(&mut self) {
         let current_shape = self.sufficient_stats.shape();
 
