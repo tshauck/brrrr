@@ -10,9 +10,71 @@ use log::info;
 
 use crate::ldalib::{dirichlet_expectation, get_gamma_random_matrix};
 
-/// A struct for holding the state and training of an online LDA model.
-pub struct OnlineLDA {
+/// LDAState is an object that holds the necessary statistics in order to
+/// make streaming updates to the inference model.
+pub struct LDAState {
+    /// The prior probabilities for the terms.
+    eta: DMatrix<f64>,
 
+    /// The shape of the sufficient statistics.
+    sufficient_stats: DMatrix<f64>,
+
+    /// Num docs
+    num_docs: usize,
+}
+
+impl Clone for LDAState {
+    fn clone(&self) -> LDAState {
+        let eta_shape = self.eta.shape();
+
+        let mut eta_zeros = DMatrix::<f64>::zeros(eta_shape.0, eta_shape.1);
+        eta_zeros.copy_from(&self.eta);
+
+        let sstats_shape = self.sufficient_stats.shape();
+        let mut sstats = DMatrix::<f64>::zeros(sstats_shape.0, sstats_shape.1);
+
+        sstats.copy_from(&self.sufficient_stats);
+
+        LDAState {
+            eta: eta_zeros,
+            sufficient_stats: sstats,
+            num_docs: self.num_docs,
+        }
+    }
+}
+
+impl LDAState {
+    /// Set up LDA State.
+    fn new(eta: DMatrix<f64>, sstats_shape: (usize, usize)) -> LDAState {
+        let sufficient_stats = DMatrix::<f64>::zeros(sstats_shape.0, sstats_shape.1);
+
+        LDAState {
+            eta: eta,
+            sufficient_stats: sufficient_stats,
+            num_docs: 0,
+        }
+    }
+
+    fn with_sufficient_stats(&mut self, sufficient_stats: &DMatrix<f64>) -> &mut LDAState {
+        self.sufficient_stats.copy_from(sufficient_stats);
+        self
+    }
+
+    fn reset(&mut self) {
+        let current_shape = self.sufficient_stats.shape();
+
+        self.sufficient_stats = DMatrix::<f64>::zeros(current_shape.0, current_shape.1);
+        self.num_docs = 0;
+    }
+
+    fn merge(&mut self, other: &LDAState) {
+        self.sufficient_stats = &self.sufficient_stats + &other.sufficient_stats;
+        self.num_docs = self.num_docs + other.num_docs;
+    }
+}
+
+/// A struct for holding parameters for training of an online LDA model.
+pub struct OnlineLDA {
     /// The number of topics used during training, K.
     num_topics: usize,
 
@@ -81,7 +143,6 @@ impl OnlineLDA {
             // https://github.com/blei-lab/onlineldavb/blob/dee5dcf9492d2b2870ba5c1fc14ac41cbf83596c/onlineldavb.py#L156-L170
             for it in 0..100 {
                 let lastgamma = gamma_d;
-
             }
         }
     }
@@ -95,6 +156,42 @@ mod tests {
     fn init() {
         std::env::set_var("RUST_LOG", "trace");
         env_logger::init();
+    }
+
+    #[test]
+    fn test_lda_state_operations() {
+        // Test that LDAState and its operations behave as expected.
+        let eta = DMatrix::<f64>::zeros(10, 10);
+
+        let mut state = LDAState::new(eta, (5, 5));
+
+        let batch_document_size = 10;
+        let num_topics = 10;
+
+        let gamma = get_gamma_random_matrix(batch_document_size, num_topics);
+        let expected_sufficient_stats = DMatrix::<f64>::zeros(batch_document_size, num_topics);
+
+        state.sufficient_stats = gamma;
+
+        let not_eq_zero = expected_sufficient_stats.eq(&state.sufficient_stats);
+        assert!(!not_eq_zero);
+
+        state.reset();
+
+        let eq_zero = expected_sufficient_stats.eq(&state.sufficient_stats);
+        assert!(eq_zero);
+
+        let merge_gamma = get_gamma_random_matrix(batch_document_size, num_topics);
+        let merge_eta = DMatrix::<f64>::zeros(10, 10);
+
+        let mut merge_state = LDAState::new(merge_eta, merge_gamma.shape());
+        merge_state.with_sufficient_stats(&merge_gamma);
+
+        state.merge(&merge_state);
+
+        // The state should be equal to gamma, because the original state is reset.
+        let eq_merge_gamma = merge_state.sufficient_stats.eq(&merge_gamma);
+        assert!(eq_merge_gamma);
     }
 
     #[test]
