@@ -10,14 +10,14 @@ file formats.
   - [GitHub Releases](#github-releases)
 - [brrrr-lib](#brrrr-lib)
 
-
 ## brrrr
 
 The CLI exposes many of the related `brrrr` functionality through a command line interface. `brrrr-lib` is intended for use in other modules.
+
 ### Usage
 
-For a self-contained example script, see [examples.sh]. But as a quick example,
-say you have a FASTA file and would like to convert it to json.
+As a quick example, say you have a FASTA file and would like to convert it to
+json.
 
 ```console
 $ echo ">1\nATCG\n>2\nTAGC\n" | brrrr fa2jsonl | jq
