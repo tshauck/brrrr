@@ -46,7 +46,7 @@ pub fn fa2pq(input: &str, output: &str) -> Result<()> {
         for chunk_i in chunk {
             let record = match chunk_i {
                 Ok(r) => r,
-                Err(error) => panic!(error),
+                Err(error) => panic!("{}", error),
             };
 
             id_builder
@@ -120,7 +120,7 @@ pub fn fq2pq(input: &str, output: &str) -> Result<()> {
         for chunk_i in chunk {
             let record = match chunk_i {
                 Ok(r) => r,
-                Err(error) => panic!(error),
+                Err(error) => panic!("{}", error),
             };
 
             id_builder

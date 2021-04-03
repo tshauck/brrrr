@@ -1,10 +1,10 @@
 // (c) Copyright 2020 Trent Hauck
 // All Rights Reserved
 
-use std::fs::File;
 use std::io::{stdin, stdout, Result};
 use std::path::PathBuf;
 use std::str;
+use std::{fs::File, io::BufReader};
 
 use bio::io::gff;
 use clap::{App, Clap, IntoApp};
@@ -66,6 +66,11 @@ enum Brrrr {
         #[clap(parse(from_os_str))]
         input: Option<PathBuf>,
     },
+    #[clap(name = "mzml2jsonl", about = "Converts mzml input to jsonl.")]
+    MzML2jsonl {
+        #[clap(parse(from_os_str))]
+        input: Option<PathBuf>,
+    },
     #[clap(name = "gen", about = "Generate the man page for the tool.")]
     Completion {
         #[clap(short, long, arg_enum)]
@@ -106,6 +111,17 @@ fn main() -> Result<()> {
             Some(input) => {
                 let f = File::open(input).expect("Error opening file.");
                 json_writer::fq2jsonl(f, &mut stdout())
+            }
+        },
+        Brrrr::MzML2jsonl { input } => match input {
+            None => {
+                let bstd = BufReader::new(stdin());
+                json_writer::mzml2jsonl(bstd, &mut stdout())
+            }
+            Some(input) => {
+                let f = File::open(input).expect("Error opening file.");
+                let bf = BufReader::new(f);
+                json_writer::mzml2jsonl(bf, &mut stdout())
             }
         },
         Brrrr::Completion { gen_type } => {

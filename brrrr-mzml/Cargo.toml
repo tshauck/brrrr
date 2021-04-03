@@ -1,0 +1,13 @@
+[package]
+authors = ["Trent Hauck <trent@trenthauck.com>"]
+edition = "2018"
+name = "brrrr-mzml"
+version = "0.9.0"
+
+[dependencies]
+quick-xml = { version = "0.22", features = [ "serialize" ] }
+serde = { version = "1.0", features = [ "derive" ] }
+base64 = { version = "0.13.0" }
+byteorder = "1"
+structure = "0.1"
+flate2 = "1.0"

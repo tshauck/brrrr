@@ -1,13 +1,15 @@
 // (c) Copyright 2020 Trent Hauck
 // All Rights Reserved
 
-use std::io::{ErrorKind, Read, Result, Write};
+use std::io::{BufRead, ErrorKind, Read, Result, Write};
 
 use serde::ser::Serialize;
 
 use crate::writer;
 
 use writer::RecordWriter;
+
+use brrrr_mzml::parser::parse_mzml;
 
 use bio::io::fasta;
 use bio::io::fastq;
@@ -80,6 +82,21 @@ pub fn fa2jsonl<R: Read, W: Write>(input: R, output: &mut W) -> Result<()> {
             }
         }
     }
+    Ok(())
+}
+
+/// Converts a mzML file to JSONL
+///
+/// # Arguments
+///
+/// * `input` an input that implements the Read trait.
+/// * `output` an output that implements the Write trait.
+pub fn mzml2jsonl<R: BufRead, W: Write>(inputs: R, mut output: &mut W) -> Result<()> {
+    let mzml = parse_mzml(inputs).expect("FUCK");
+
+    serde_json::to_writer(&mut output, &mzml)?;
+    output.write_all(b"\n")?;
+
     Ok(())
 }
 
