@@ -12,8 +12,7 @@ use bio::io::fastq;
 use itertools::Itertools;
 
 use arrow::array::*;
-use arrow::datatypes::DataType;
-use arrow::datatypes::{Field, Schema};
+use arrow::datatypes::*;
 use arrow::record_batch::RecordBatch;
 use parquet::arrow::arrow_writer::ArrowWriter;
 
@@ -46,7 +45,7 @@ pub fn fa2pq(input: &str, output: &str) -> Result<()> {
         for chunk_i in chunk {
             let record = match chunk_i {
                 Ok(r) => r,
-                Err(error) => panic!(error),
+                Err(error) => panic!("{}", error),
             };
 
             id_builder
@@ -120,7 +119,7 @@ pub fn fq2pq(input: &str, output: &str) -> Result<()> {
         for chunk_i in chunk {
             let record = match chunk_i {
                 Ok(r) => r,
-                Err(error) => panic!(error),
+                Err(error) => panic!("{}", error),
             };
 
             id_builder
