@@ -28,11 +28,6 @@ jobs:
             rust: nightly
             target: x86_64-pc-windows-msvc
     steps:
-      - name: Install Tasks
-        uses: Arduino/actions/setup-taskfile@master
-        with:
-          version: "3"
-
       - name: Checkout repository
         uses: actions/checkout@v2
         with:
@@ -48,7 +43,7 @@ jobs:
 
       - name: Test
         run: |
-          task test
+          cargo test
 
       - name: Clippy
         run: |

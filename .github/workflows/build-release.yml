@@ -52,11 +52,6 @@ jobs:
             rust: nightly
             target: x86_64-pc-windows-msvc
     steps:
-      - name: Install Tasks
-        uses: Arduino/actions/setup-taskfile@master
-        with:
-          version: "3"
-
       - name: Checkout repository
         uses: actions/checkout@v2
         with:
@@ -81,7 +76,7 @@ jobs:
           cargo install cross
 
       - name: Build release binary
-        run: task prod-release TARGET=${{ matrix.target }}
+        run: cross build --release --target ${{ matrix.target }}
 
       - name: Strip release binary (arm)
         if: matrix.build == 'linux-arm'
