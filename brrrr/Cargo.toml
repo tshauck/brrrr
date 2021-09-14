@@ -12,7 +12,7 @@ path = "src/main.rs"
 brrrr-lib = {path = "../brrrr-lib"}
 clap = "3.0.0-beta.4"
 clap_generate = {version = "3.0.0-beta.4"}
-bio = {git = "https://github.com/rust-bio/rust-bio"}
+bio = "0.37.1"
 
 [dev-dependencies]
 assert_cmd = "1.0.1"
