@@ -30,7 +30,7 @@ enum GeneratorChoice {
     name = "brrrr",
     about = "Commandline utilities for modern biology and chemistry informatics.",
     author = "Trent Hauck <trent@trenthauck.com>",
-    version = "0.9.4"
+    version = "0.9.5"
 )]
 enum Brrrr {
     #[clap(name = "fa2pq", about = "Converts a FASTA input to parquet.")]
