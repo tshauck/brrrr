@@ -9,7 +9,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        build: [macos-x86, linux-x86, linux-arm, win-msvc]
+        build: [macos-x86, linux-x86, win-msvc]
         include:
           - build: macos-x86
             os: macos-latest
@@ -19,10 +19,6 @@ jobs:
             os: ubuntu-18.04
             rust: nightly
             target: x86_64-unknown-linux-musl
-          - build: linux-arm
-            os: ubuntu-18.04
-            rust: nightly
-            target: aarch64-unknown-linux-gnu
           - build: win-msvc
             os: windows-2019
             rust: nightly
