@@ -147,6 +147,22 @@ jobs:
           path: ${{ env.ASSET_NAME }}-folder
           if-no-files-found: error
 
+  publish-cargo:
+    name: publish-cargo
+    needs: ["build-release"]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+      - name: Publish to Cargo
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        working-directory: ./brrrr
+        run: |
+          cargo publish --token $CARGO_REGISTRY_TOKEN
+
   finish-release:
     name: finish-release
     needs: ["build-release"]
