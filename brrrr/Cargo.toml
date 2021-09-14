@@ -2,7 +2,7 @@
 authors = ["Trent Hauck <trent@trenthauck.com>"]
 edition = "2018"
 name = "brrrr"
-version = "0.9.3"
+version = "0.9.4"
 
 [[bin]]
 name = "brrrr"
