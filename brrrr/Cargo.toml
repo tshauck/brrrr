@@ -10,8 +10,8 @@ path = "src/main.rs"
 
 [dependencies]
 brrrr-lib = {path = "../brrrr-lib"}
-clap = "3.0.0-beta.2"
-clap_generate = {version = "3.0.0-beta.2"}
+clap = "3.0.0-beta.4"
+clap_generate = {version = "3.0.0-beta.4"}
 bio = {git = "https://github.com/rust-bio/rust-bio"}
 
 [dev-dependencies]

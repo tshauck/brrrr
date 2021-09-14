@@ -7,7 +7,7 @@ use std::path::PathBuf;
 use std::str;
 
 use bio::io::gff;
-use clap::{App, Clap, IntoApp};
+use clap::{App, ArgEnum, Clap, IntoApp};
 
 use brrrr_lib::json_writer;
 use brrrr_lib::parquet_writer;
@@ -15,7 +15,7 @@ use brrrr_lib::parquet_writer;
 use clap_generate::generators::{Bash, Fish, PowerShell, Zsh};
 use clap_generate::{generate, Generator};
 
-#[derive(Clap, Debug, PartialEq)]
+#[derive(ArgEnum, Clap, Debug, PartialEq)]
 enum GeneratorChoice {
     Bash,
     Fish,
