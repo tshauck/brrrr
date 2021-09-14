@@ -33,7 +33,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        build: [macos-x86, linux-x86, win-msvc]
+        build: [macos-x86, linux-x86, linux-arm, win-msvc]
         include:
           - build: macos-x86
             os: macos-latest
@@ -43,6 +43,10 @@ jobs:
             os: ubuntu-18.04
             rust: nightly
             target: x86_64-unknown-linux-musl
+          - build: linux-arm
+            os: ubuntu-18.04
+            rust: nightly
+            target: aarch64-unknown-linux-gnu
           - build: win-msvc
             os: windows-2019
             rust: nightly
@@ -73,6 +77,11 @@ jobs:
 
       - name: Build release binary
         run: cross build --release --target ${{ matrix.target }}
+
+      - name: Strip release binary (arm)
+        if: matrix.build == 'linux-arm'
+        run: |
+          docker run --rm -v $PWD/target:/target:Z rustembedded/cross:${{ matrix.target }} aarch64-linux-gnu-strip /target/${{ matrix.target}}/release/brrrr
 
       - name: Strip release binary (x86)
         if: matrix.build == 'linux-x86' || matrix.build == 'macos-x86'
