@@ -154,7 +154,7 @@ jobs:
       - name: Publish to Cargo
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-        working-directory: ./brrrr
+        working-directory: ./brrrr-lib
         run: |
           cargo publish --token $CARGO_REGISTRY_TOKEN
 
