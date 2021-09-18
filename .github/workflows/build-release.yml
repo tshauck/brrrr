@@ -20,6 +20,8 @@ jobs:
         run: mkdir artifacts
       - name: Set env
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+      - name: Set CARGO_NET_GIT_FETCH_WITH_CLI to "true"
+        run: echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> $GITHUB_ENV
       - name: Save version number to artifact
         run: echo "${{ env.VERSION }}" > artifacts/release-version
       - name: Upload artifacts
