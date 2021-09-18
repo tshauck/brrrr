@@ -3,12 +3,12 @@
 Fast command line tool to process biological sequences and annotations to modern
 file formats.
 
-- [brrrr](#brrrr)
-  - [Usage](#usage)
-  - [Installation](#installation)
-  - [Docker](#docker)
-  - [GitHub Releases](#github-releases)
-- [brrrr-lib](#brrrr-lib)
+* [brrrr](#brrrr)
+  * [Usage](#usage)
+  * [Installation](#installation)
+  * [Docker](#docker)
+  * [GitHub Releases](#github-releases)
+* [brrrr-lib](#brrrr-lib)
 
 ## brrrr
 
@@ -56,10 +56,10 @@ $ docker pull thauck/brrrr
 
 Executables are built for:
 
-- `x86_64-apple-darwin`
-- `x86_64-unknown-linux-musl`
-- `aarch64-unknown-linux-gnu`
-- `x86_64-pc-windows-msvc`
+* `x86_64-apple-darwin`
+* `x86_64-unknown-linux-musl`
+* `aarch64-unknown-linux-gnu`
+* `x86_64-pc-windows-msvc`
 
 Download the executable from GitHub's
 [release](https://github.com/tshauck/brrrr/releases) page.

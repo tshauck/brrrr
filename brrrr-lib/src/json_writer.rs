@@ -1,6 +1,7 @@
 // (c) Copyright 2020 Trent Hauck
 // All Rights Reserved
-
+/// The `json_writer` module provides an implementation for the `RecordWriter` interface to read
+/// and write from json.
 use std::io::{ErrorKind, Read, Result, Write};
 
 use serde::ser::Serialize;

@@ -7,9 +7,9 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="210mm"
-   height="297mm"
-   viewBox="0 0 210 297"
+   width="309.31683mm"
+   height="182.50885mm"
+   viewBox="0 0 309.31683 182.50885"
    version="1.1"
    id="svg8"
    sodipodi:docname="brrrr-logo.svg"
@@ -37,9 +37,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="5.063841"
-     inkscape:cx="402.26132"
-     inkscape:cy="778.35624"
+     inkscape:zoom="0.52774328"
+     inkscape:cx="383.48983"
+     inkscape:cy="294.52628"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      inkscape:document-rotation="0"
@@ -47,14 +47,16 @@
      inkscape:window-width="1680"
      inkscape:window-height="979"
      inkscape:window-x="0"
-     inkscape:window-y="23"
+     inkscape:window-y="25"
      inkscape:window-maximized="0"
      inkscape:snap-bbox="false"
      inkscape:snap-grids="true"
      inkscape:snap-to-guides="false">
     <inkscape:grid
        type="xygrid"
-       id="grid870" />
+       id="grid870"
+       originx="-14.889541"
+       originy="-29.156577" />
   </sodipodi:namedview>
   <metadata
      id="metadata5">
@@ -64,85 +66,91 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
   <g
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
-     id="layer1">
+     id="layer1"
+     transform="translate(-14.88954,-29.15658)">
     <text
        xml:space="preserve"
-       style="font-size:11.28890033px;line-height:1.25;font-family:'Cascadia Mono PL';-inkscape-font-specification:'Cascadia Mono PL, @wght=300';stroke-width:0.264583;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;font-variation-settings:'wght' 300;"
-       x="73.350563"
-       y="187.51811"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:66.2005px;line-height:1.25;font-family:'Cascadia Mono PL';-inkscape-font-specification:'Cascadia Mono PL, @wght=300';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;font-variation-settings:'wght' 300;stroke-width:1.55157"
+       x="18.64637"
+       y="78.856293"
        id="text1869"
        inkscape:export-xdpi="249.98619"
-       inkscape:export-ydpi="249.98619"><tspan
+       inkscape:export-ydpi="249.98619"
+       transform="scale(1.0416036,0.96005814)"><tspan
          sodipodi:role="line"
          id="tspan1867"
-         x="73.350563"
-         y="187.51811"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:11.28890033px;font-family:'Cascadia Mono PL';-inkscape-font-specification:'Cascadia Mono PL, @wght=300';stroke-width:0.264583;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;font-variation-settings:'wght' 300;">b</tspan></text>
+         x="18.64637"
+         y="78.856293"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:66.2005px;font-family:'Cascadia Mono PL';-inkscape-font-specification:'Cascadia Mono PL, @wght=300';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;font-variation-settings:'wght' 300;stroke-width:1.55157">b</tspan></text>
     <text
        xml:space="preserve"
-       style="font-size:11.28890033px;line-height:1.25;font-family:'Cascadia Mono PL';-inkscape-font-specification:'Cascadia Mono PL, @wght=300';stroke-width:0.264583;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;font-variation-settings:'wght' 300;"
-       x="84.074348"
-       y="187.62836"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:66.2005px;line-height:1.25;font-family:'Cascadia Mono PL';-inkscape-font-specification:'Cascadia Mono PL, @wght=300';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;font-variation-settings:'wght' 300;stroke-width:1.55157"
+       x="81.533096"
+       y="79.502769"
        id="text1869-2"
        inkscape:export-xdpi="249.98619"
-       inkscape:export-ydpi="249.98619"><tspan
+       inkscape:export-ydpi="249.98619"
+       transform="scale(1.0416036,0.96005814)"><tspan
          sodipodi:role="line"
          id="tspan1867-0"
-         x="84.074348"
-         y="187.62836"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:11.28890033px;font-family:'Cascadia Mono PL';-inkscape-font-specification:'Cascadia Mono PL, @wght=300';stroke-width:0.264583;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;font-variation-settings:'wght' 300;">r</tspan></text>
+         x="81.533096"
+         y="79.502769"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:66.2005px;font-family:'Cascadia Mono PL';-inkscape-font-specification:'Cascadia Mono PL, @wght=300';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;font-variation-settings:'wght' 300;stroke-width:1.55157">r</tspan></text>
     <text
        xml:space="preserve"
-       style="font-size:11.28890033px;line-height:1.25;font-family:'Cascadia Mono PL';-inkscape-font-specification:'Cascadia Mono PL, @wght=300';stroke-width:0.264583;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;font-variation-settings:'wght' 300;"
-       x="94.687881"
-       y="187.62836"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:66.2005px;line-height:1.25;font-family:'Cascadia Mono PL';-inkscape-font-specification:'Cascadia Mono PL, @wght=300';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;font-variation-settings:'wght' 300;stroke-width:1.55157"
+       x="143.77325"
+       y="79.502769"
        id="text1869-2-8"
        inkscape:export-xdpi="249.98619"
-       inkscape:export-ydpi="249.98619"><tspan
+       inkscape:export-ydpi="249.98619"
+       transform="scale(1.0416036,0.96005814)"><tspan
          sodipodi:role="line"
          id="tspan1867-0-3"
-         x="94.687881"
-         y="187.62836"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:11.28890033px;font-family:'Cascadia Mono PL';-inkscape-font-specification:'Cascadia Mono PL, @wght=300';stroke-width:0.264583;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;font-variation-settings:'wght' 300;">r</tspan></text>
+         x="143.77325"
+         y="79.502769"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:66.2005px;font-family:'Cascadia Mono PL';-inkscape-font-specification:'Cascadia Mono PL, @wght=300';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;font-variation-settings:'wght' 300;stroke-width:1.55157">r</tspan></text>
     <text
        xml:space="preserve"
-       style="font-size:11.28890033px;line-height:1.25;font-family:'Cascadia Mono PL';-inkscape-font-specification:'Cascadia Mono PL, @wght=300';stroke-width:0.264583;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;font-variation-settings:'wght' 300;"
-       x="105.30142"
-       y="187.62836"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:66.2005px;line-height:1.25;font-family:'Cascadia Mono PL';-inkscape-font-specification:'Cascadia Mono PL, @wght=300';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;font-variation-settings:'wght' 300;stroke-width:1.55157"
+       x="206.01353"
+       y="79.502769"
        id="text1869-2-0"
        inkscape:export-xdpi="249.98619"
-       inkscape:export-ydpi="249.98619"><tspan
+       inkscape:export-ydpi="249.98619"
+       transform="scale(1.0416036,0.96005814)"><tspan
          sodipodi:role="line"
          id="tspan1867-0-5"
-         x="105.30142"
-         y="187.62836"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:11.28890033px;font-family:'Cascadia Mono PL';-inkscape-font-specification:'Cascadia Mono PL, @wght=300';stroke-width:0.264583;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;font-variation-settings:'wght' 300;">r</tspan></text>
+         x="206.01353"
+         y="79.502769"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:66.2005px;font-family:'Cascadia Mono PL';-inkscape-font-specification:'Cascadia Mono PL, @wght=300';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;font-variation-settings:'wght' 300;stroke-width:1.55157">r</tspan></text>
     <text
        xml:space="preserve"
-       style="font-size:11.28890033px;line-height:1.25;font-family:'Cascadia Mono PL';-inkscape-font-specification:'Cascadia Mono PL, @wght=300';stroke-width:0.264583;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;font-variation-settings:'wght' 300;"
-       x="115.91496"
-       y="187.62836"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:66.2005px;line-height:1.25;font-family:'Cascadia Mono PL';-inkscape-font-specification:'Cascadia Mono PL, @wght=300';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;font-variation-settings:'wght' 300;stroke-width:1.55157"
+       x="268.25381"
+       y="79.502769"
        id="text1869-2-1"
        inkscape:export-xdpi="249.98619"
-       inkscape:export-ydpi="249.98619"><tspan
+       inkscape:export-ydpi="249.98619"
+       transform="scale(1.0416036,0.96005814)"><tspan
          sodipodi:role="line"
          id="tspan1867-0-50"
-         x="115.91496"
-         y="187.62836"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:11.28890033px;font-family:'Cascadia Mono PL';-inkscape-font-specification:'Cascadia Mono PL, @wght=300';stroke-width:0.264583;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;font-variation-settings:'wght' 300;">r</tspan></text>
+         x="268.25381"
+         y="79.502769"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:66.2005px;font-family:'Cascadia Mono PL';-inkscape-font-specification:'Cascadia Mono PL, @wght=300';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;font-variation-settings:'wght' 300;stroke-width:1.55157">r</tspan></text>
     <g
        id="g2329"
        style="fill:#d5e5ff"
        inkscape:export-xdpi="249.98619"
        inkscape:export-ydpi="249.98619"
-       transform="translate(-0.01961,-3.96871)">
+       transform="matrix(6.1082024,0,0,5.6300012,-428.73776,-1002.3644)">
       <path
          style="fill:#d5e5ff;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          d="m 80.7695,207.65863 -0.01303,-2.6458 c -0.01306,-2.65128 -7.956953,-3.9296 -7.96347,-5.2525 l 0.01303,2.6458 c 0.0065,1.3229 7.950437,2.6067 7.96347,5.2525 z"
@@ -224,7 +232,7 @@
        style="fill:#aaccff"
        inkscape:export-xdpi="249.98619"
        inkscape:export-ydpi="249.98619"
-       transform="translate(0.01297,2.64579)">
+       transform="matrix(6.1082024,0,0,5.6300012,-428.53875,-965.1247)">
       <path
          style="fill:#aaccff;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          d="m 80.704334,194.42963 0.01303,2.6458 c 0.01306,2.65129 -7.917853,4.0078 -7.911337,5.3307 l -0.01303,-2.6458 c -0.0065,-1.3229 7.92437,-2.6849 7.911337,-5.3307 z"
