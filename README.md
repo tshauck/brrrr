@@ -62,7 +62,7 @@ Executables are built for:
 * `x86_64-pc-windows-msvc`
 
 Download the executable from GitHub's
-[release](https://github.com/tshauck/brrrr/releases) page.
+[release](https://github.com/tshauck/brrrr/releases/latest) page.
 
 [examples.sh]: https://github.com/tshauck/brrrr/blob/master/examples.sh
 
