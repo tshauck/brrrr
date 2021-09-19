@@ -4,6 +4,18 @@ on:
   - push
 
 jobs:
+  pre-flight:
+    name: pre-flight
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dump env
+        run: env | sort
+      - name: Dump GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: echo "$GITHUB_CONTEXT"
+      - name: Set CARGO_NET_GIT_FETCH_WITH_CLI to "true"
+        run: echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> $GITHUB_ENV
   test-release:
     name: test-release
     runs-on: ${{ matrix.os }}
