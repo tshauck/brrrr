@@ -9,6 +9,7 @@ use std::str;
 use bio::io::gff;
 use clap::{App, ArgEnum, Clap, IntoApp};
 
+use brrrr_lib::csv_writer;
 use brrrr_lib::json_writer;
 use brrrr_lib::parquet_writer;
 
@@ -66,6 +67,16 @@ enum Brrrr {
         #[clap(parse(from_os_str))]
         input: Option<PathBuf>,
     },
+    #[clap(name = "fa2csv", about = "Converts a FASTA input to csv.")]
+    Fa2csv {
+        #[clap(parse(from_os_str))]
+        input: Option<PathBuf>,
+    },
+    #[clap(name = "fq2csv", about = "Converts a FASTQ input to csv.")]
+    Fq2csv {
+        #[clap(parse(from_os_str))]
+        input: Option<PathBuf>,
+    },
     #[clap(name = "gen", about = "Generate the man page for the tool.")]
     Completion {
         #[clap(short, long, arg_enum)]
@@ -79,13 +90,6 @@ fn print_completions<G: Generator>(app: &mut App) {
 
 fn main() -> Result<()> {
     match Brrrr::parse() {
-        Brrrr::Fa2jsonl { input } => match input {
-            None => json_writer::fa2jsonl(stdin(), &mut stdout()),
-            Some(input) => {
-                let f = File::open(input).expect("Error opening file.");
-                json_writer::fa2jsonl(f, &mut stdout())
-            }
-        },
         Brrrr::Fa2pq {
             input_file_name,
             output_file_name,
@@ -94,6 +98,27 @@ fn main() -> Result<()> {
             input_file_name,
             output_file_name,
         } => parquet_writer::fq2pq(input_file_name.as_str(), output_file_name.as_str()),
+        Brrrr::Fa2csv { input } => match input {
+            None => csv_writer::fa2csv(stdin(), &mut stdout()),
+            Some(input) => {
+                let f = File::open(input).expect("Error opening file.");
+                csv_writer::fa2csv(f, &mut stdout())
+            }
+        },
+        Brrrr::Fq2csv { input } => match input {
+            None => csv_writer::fq2csv(stdin(), &mut stdout()),
+            Some(input) => {
+                let f = File::open(input).expect("Error opening file.");
+                csv_writer::fq2csv(f, &mut stdout())
+            }
+        },
+        Brrrr::Fa2jsonl { input } => match input {
+            None => json_writer::fa2jsonl(stdin(), &mut stdout()),
+            Some(input) => {
+                let f = File::open(input).expect("Error opening file.");
+                json_writer::fa2jsonl(f, &mut stdout())
+            }
+        },
         Brrrr::Gff2jsonl { input, gff_type } => match input {
             None => json_writer::gff2jsonl(stdin(), &mut stdout(), gff_type),
             Some(input) => {

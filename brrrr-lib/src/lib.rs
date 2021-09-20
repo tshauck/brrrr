@@ -29,9 +29,14 @@
 //!
 //! `fa2jsonl` relies on `JsonRecordWriter`, which knows how to parse the input fasta bytes and
 //! write them to objects that implement `Write`.
+//!
+//! If you're interested in the CLI, see: <https://github.com/tshauck/brrrr/releases/latest>
 
 /// json_writer holds a writer, and outputs FASTA and GFF records as newline delimited json.
 pub mod json_writer;
+
+/// csv_writer holds a writer, and outputs FASTA and GFF records as csv.
+pub mod csv_writer;
 
 /// parquet_writer holds a writer, and outputs FASTA and GFF records as parquet.
 pub mod parquet_writer;

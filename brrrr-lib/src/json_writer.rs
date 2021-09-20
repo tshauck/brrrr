@@ -36,7 +36,7 @@ impl<W: Write> writer::RecordWriter for JsonRecordWriter<W> {
     }
 }
 
-/// Converts a FASTA file to JSONL
+/// Converts a FASTQ file to JSONL
 ///
 /// # Arguments
 ///
