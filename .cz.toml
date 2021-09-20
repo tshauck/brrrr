@@ -6,4 +6,5 @@ version_files = [
   "./brrrr/Cargo.toml:version",
   "./brrrr/src/main.rs:version",
   "./brrrr-lib/Cargo.toml:version",
+  "./README.md:version",
 ]

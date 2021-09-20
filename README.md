@@ -1,7 +1,7 @@
 # brrrr <a href='https://github.com/tshauck/brrrr'><img src='brrrr/docs/brrrr-logo.png' align="right" height="150" /></a>
 
-Fast command line tool to process biological sequences and annotations to modern
-file formats.
+> brrrr is a CLI to facilitate common informatics tasks, and brrrr-lib is the
+> abstracted code in a cargo installable package.
 
 * [brrrr](#brrrr)
   * [Usage](#usage)
@@ -68,9 +68,11 @@ Download the executable from GitHub's
 
 ## brrrr-lib
 
-`brrrr-lib` can be added to `Cargo.toml` to import the module.
+`brrrr-lib` is a crate contains abstracted code and is used by the CLI.
 
 ```toml
 [dependencies]
-brrrr-lib = { git = "https://github.com/tshauck/brrrr", tag = "v1.2.3" }
+brrrr-lib = "0.9.11"
 ```
+
+Docs are available here: [docs.rs/brrrr-lib](https://docs.rs/brrrr-lib/0.9.11/brrrr_lib/).
