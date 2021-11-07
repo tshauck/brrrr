@@ -23,9 +23,9 @@ $ cz bump --dry-run
 
 This will bump the appropriate throughout the code, and make a commit and tag corresponding to the change.
 
-Finally, push `master` and the newly-created tag to GitHub.
+Finally, push `main` and the newly-created tag to GitHub.
 
 ```console
 # update tag w/ the appropriate the version
-$ git push --atomic origin master refs/tags/v0.1.0
+$ git push --atomic origin main refs/tags/v0.1.0
 ```

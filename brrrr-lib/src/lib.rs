@@ -2,8 +2,8 @@
 // All Rights Reserved
 
 #![doc(
-    html_logo_url = "https://raw.githubusercontent.com/tshauck/brrrr/master/brrrr/docs/brrrr-logo.svg",
-    html_favicon_url = "https://raw.githubusercontent.com/tshauck/brrrr/master/brrrr/docs/brrrr-logo.svg"
+    html_logo_url = "https://raw.githubusercontent.com/tshauck/brrrr/main/brrrr/docs/brrrr-logo.svg",
+    html_favicon_url = "https://raw.githubusercontent.com/tshauck/brrrr/main/brrrr/docs/brrrr-logo.svg"
 )]
 
 //! # brrrr

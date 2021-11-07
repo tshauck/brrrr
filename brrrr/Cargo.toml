@@ -1,6 +1,6 @@
 [package]
 authors = ["Trent Hauck <trent@trenthauck.com>"]
-edition = "2018"
+edition = "2021"
 name = "brrrr"
 version = "0.10.0"
 

@@ -64,7 +64,7 @@ Executables are built for:
 Download the executable from GitHub's
 [release](https://github.com/tshauck/brrrr/releases/latest) page.
 
-[examples.sh]: https://github.com/tshauck/brrrr/blob/master/examples.sh
+[examples.sh]: https://github.com/tshauck/brrrr/blob/main/examples.sh
 
 ## brrrr-lib
 
