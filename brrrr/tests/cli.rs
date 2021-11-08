@@ -8,7 +8,7 @@ use std::process::Command;
 fn file_doesnt_exist() -> Result<(), Box<dyn std::error::Error>> {
     let mut cmd = Command::cargo_bin("brrrr")?;
 
-    cmd.arg("--version");
+    cmd.arg("help");
     cmd.assert().success();
 
     Ok(())
