@@ -12,7 +12,8 @@
 
 ## brrrr
 
-The CLI exposes many of the related `brrrr` functionality through a command line interface. `brrrr-lib` is intended for use in other modules.
+The CLI exposes many of the related `brrrr` functionality through a command line
+interface. `brrrr-lib` is intended for use in other modules.
 
 ### Usage
 
@@ -20,7 +21,7 @@ As a quick example, say you have a FASTA file and would like to convert it to
 json.
 
 ```console
-$ echo ">1\nATCG\n>2\nTAGC\n" | brrrr fa2jsonl | jq
+; echo ">1\nATCG\n>2\nTAGC\n" | brrrr fa2jsonl | jq
 {
   "id": "1",
   "desc": null,
@@ -35,9 +36,7 @@ $ echo ">1\nATCG\n>2\nTAGC\n" | brrrr fa2jsonl | jq
 
 For the CLI help screen.
 
-```console
-$ brrrr --help
-```
+  brrrr --help
 
 ### Installation
 

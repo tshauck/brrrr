@@ -10,7 +10,7 @@ path = "src/main.rs"
 
 [dependencies]
 brrrr-lib = {path = "../brrrr-lib"}
-bio = "0.37.1"
+bio = "0.41"
 argh = "0.1.6"
 
 [dev-dependencies]

@@ -24,8 +24,8 @@ use parquet::arrow::arrow_writer::ArrowWriter;
 pub fn fa2pq(input: &str, output: &str) -> Result<()> {
     let file_schema = Schema::new(vec![
         Field::new("id", DataType::Utf8, false),
-        Field::new("sequence", DataType::Utf8, false),
         Field::new("description", DataType::Utf8, true),
+        Field::new("sequence", DataType::Utf8, false),
     ]);
 
     let input_file = fs::File::open(input).expect("Error opening file.");
