@@ -122,7 +122,7 @@ enum Subcommand {
 #[derive(FromArgs, PartialEq, Debug)]
 #[argh(
     name = "brrrr",
-    description = "Bioinformatic files go brrrrr. Version 0.10.1."
+    description = "Bioinformatic files go brrrr. Version 0.11.0"
 )]
 struct Brrrr {
     #[argh(subcommand, description = "the sub-command")]
