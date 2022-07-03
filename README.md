@@ -71,7 +71,7 @@ Download the executable from GitHub's
 
 ```toml
 [dependencies]
-brrrr-lib = "0.9.11"
+brrrr-lib = "0.11.1"
 ```
 
 Docs are available here: [docs.rs/brrrr-lib](https://docs.rs/brrrr-lib/0.9.11/brrrr_lib/).
