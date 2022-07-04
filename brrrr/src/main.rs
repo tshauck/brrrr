@@ -19,7 +19,7 @@ use brrrr_lib::parquet_writer;
     name = "brrrr",
     about = "Commandline utilities for modern biology and chemistry informatics.",
     author = "Trent Hauck <trent@trenthauck.com>",
-    version = "0.11.2"
+    version = "0.12.0"
 )]
 struct Cli {
     #[clap(subcommand)]
