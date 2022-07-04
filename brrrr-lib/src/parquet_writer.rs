@@ -155,8 +155,8 @@ pub fn fq2pq(input: &str, output: &str) -> Result<()> {
             Arc::new(file_schema.clone()),
             vec![
                 Arc::new(id_array),
-                Arc::new(desc_array),
                 Arc::new(seq_array),
+                Arc::new(desc_array),
                 Arc::new(quality_array),
             ],
         )

@@ -41,5 +41,8 @@ pub mod csv_writer;
 /// parquet_writer holds a writer, and outputs FASTA and GFF records as parquet.
 pub mod parquet_writer;
 
+/// parquet_reader is like parquet_writer, but for reading parquet in.
+pub mod parquet_reader;
+
 /// Interface for the generic writer object.
 pub mod writer;

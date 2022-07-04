@@ -10,6 +10,7 @@ use clap::{Parser, Subcommand};
 
 use brrrr_lib::csv_writer;
 use brrrr_lib::json_writer;
+use brrrr_lib::parquet_reader;
 use brrrr_lib::parquet_writer;
 
 /// The Enum that represents the underlying CLI.
@@ -29,6 +30,20 @@ struct Cli {
 enum Brrrr {
     #[clap(name = "fa2pq", about = "Converts a FASTA input to parquet.")]
     Fa2pq {
+        /// The path where the input should be read from.
+        input_file_name: String,
+        /// The path where the output should be written to.
+        output_file_name: String,
+    },
+    #[clap(name = "pq2fa", about = "Converts a parquet file to FASTA format.")]
+    Pq2Fa {
+        /// The path where the input should be read from.
+        input_file_name: String,
+        /// The path where the output should be written to.
+        output_file_name: String,
+    },
+    #[clap(name = "pq2fq", about = "Converts a parquet file to FASTQ format.")]
+    Pq2Fq {
         /// The path where the input should be read from.
         input_file_name: String,
         /// The path where the output should be written to.
@@ -80,6 +95,14 @@ fn main() -> Result<()> {
             input_file_name,
             output_file_name,
         } => parquet_writer::fa2pq(input_file_name.as_str(), output_file_name.as_str()),
+        Brrrr::Pq2Fa {
+            input_file_name,
+            output_file_name,
+        } => parquet_reader::pq2fa(input_file_name.as_str(), output_file_name.as_str()),
+        Brrrr::Pq2Fq {
+            input_file_name,
+            output_file_name,
+        } => parquet_reader::pq2fq(input_file_name.as_str(), output_file_name.as_str()),
         Brrrr::Fq2pq {
             input_file_name,
             output_file_name,
