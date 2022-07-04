@@ -15,7 +15,18 @@
 The CLI exposes many of the related `brrrr` functionality through a command line
 interface. `brrrr-lib` is intended for use in other modules.
 
-### Usage
+For the CLI help screen.
+
+    brrrr --help
+
+### Use Case
+
+Use Cases:
+
+* Convert FASTA to JSON
+* Convert FASTA to and from parquet
+
+#### Convert FASTA to JSON
 
 As a quick example, say you have a FASTA file and would like to convert it to
 json.
@@ -34,24 +45,60 @@ json.
 }
 ```
 
-For the CLI help screen.
+#### Convert FASTA to and from parquet
 
-  brrrr --help
+Parquet is a useful file format for large scale data storage, and there exist
+many tools that can interact with it. For example, DuckDB can be used to query
+parquet files with SQL.
+
+Starting with the swissprot dataset, use the excellent seqkit to find some
+summary stats.
+
+```console
+$ seqkit stats uniprot-reviewed_yes.fasta
+file                        format  type     num_seqs      sum_len  min_len  avg_len  max_len
+uniprot-reviewed_yes.fasta  FASTA   Protein   561,176  201,758,313        2    359.5   35,213
+```
+
+Convert it to parquet...
+
+```console
+$ brrrr fa2pq ./uniprot-reviewed_yes.fasta swissprot.parquet && \
+    test -f swissprot.parquet && \
+    echo "swissprot.parquet exists"
+swissprot.parquet exists
+```
+
+Load it into DuckDB, select sequences 1000aa and over in length, then create new parquet file.
+
+```console
+$ duckdb -c "COPY (SELECT * FROM 'swissprot.parquet' WHERE length("sequence") >= 1000) TO 'swissprot.1000.parquet' (FORMAT PARQUET);"
+```
+
+```console
+$ duckdb -c "SELECT COUNT(*) FROM 'swissprot.1000.parquet'"
+┌──────────────┐
+│ count_star() │
+├──────────────┤
+│ 18236        │
+└──────────────┘
+```
+
+Take it from parquet and convert it back to FASTA, then check the min_len is
+what's expected.
+
+```console
+$ brrrr pq2fa swissprot.1000.parquet swissprot.1000.fasta && seqkit stats swissprot.1000.fasta
+file                  format  type     num_seqs     sum_len  min_len  avg_len  max_len
+swissprot.1000.fasta  FASTA   Protein    18,236  28,228,604    1,000    1,548   35,213
+```
 
 ### Installation
 
-The `brrrr` cli can be install one of two ways, either through Docker or by
-getting an executable via GitHub's release page.
+The CLI is the executable entrypoint, though the library can be separately
+installed.
 
-### Docker
-
-Cross-platform builds are available from docker hub.
-
-```console
-$ docker pull thauck/brrrr
-```
-
-### GitHub Releases
+## CLI
 
 Executables are built for:
 
