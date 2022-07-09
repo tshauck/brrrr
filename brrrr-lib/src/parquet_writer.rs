@@ -3,6 +3,7 @@
 
 use std::fs;
 use std::io::Result;
+use std::path::Path;
 use std::str;
 use std::sync::Arc;
 
@@ -20,7 +21,17 @@ use parquet::arrow::arrow_writer::ArrowWriter;
 use parquet::basic::Compression;
 use parquet::file::properties::WriterProperties;
 
-pub fn gff2pq(input: &str, output: &str) -> Result<()> {
+/// Converts a GFF file to Parquet.
+///
+/// # Arguments
+/// * `input` The path to the input GFF file.
+/// * `output` The path to the output parquet file.
+/// * `parquet_compression` The parquet compression to use.
+pub fn gff2pq<P: AsRef<Path>>(input: P, output: P, parquet_compression: Compression) -> Result<()> {
+    let props = WriterProperties::builder()
+        .set_compression(parquet_compression)
+        .set_statistics_enabled(true);
+
     let file_schema = Schema::new(vec![
         Field::new("seqname", DataType::Utf8, false),
         Field::new("source", DataType::Utf8, true),
@@ -53,7 +64,8 @@ pub fn gff2pq(input: &str, output: &str) -> Result<()> {
     let records = reader.records();
 
     let file = fs::File::create(output).unwrap();
-    let mut writer = ArrowWriter::try_new(file, Arc::new(file_schema.clone()), None).unwrap();
+    let mut writer =
+        ArrowWriter::try_new(file, Arc::new(file_schema.clone()), Some(props.build())).unwrap();
     let chunk_size = 2usize.pow(20);
 
     for chunk in records.into_iter().chunks(chunk_size).into_iter() {
@@ -165,10 +177,10 @@ pub fn gff2pq(input: &str, output: &str) -> Result<()> {
 /// Converts a FASTA file to Parquet.
 ///
 /// # Arguments
-/// * `input` The string representing the path to the input fasta file.
-/// * `output` The string representing the path to the output parquet file.
+/// * `input` The the path to the input fasta file.
+/// * `output` The the path to the output parquet file.
 /// * `parquet_compression` The parquet compression to use.
-pub fn fa2pq(input: &str, output: &str, parquet_compression: Compression) -> Result<()> {
+pub fn fa2pq<P: AsRef<Path>>(input: P, output: P, parquet_compression: Compression) -> Result<()> {
     let file_schema = Schema::new(vec![
         Field::new("id", DataType::Utf8, false),
         Field::new("description", DataType::Utf8, true),
@@ -246,7 +258,7 @@ pub fn fa2pq(input: &str, output: &str, parquet_compression: Compression) -> Res
 /// * `input` The string representing the path to the input fasta file.
 /// * `output` The string representing the path to the output parquet file.
 /// * `parquet_compression` The parquet compression to use.
-pub fn fq2pq(input: &str, output: &str, parquet_compression: Compression) -> Result<()> {
+pub fn fq2pq<P: AsRef<Path>>(input: P, output: P, parquet_compression: Compression) -> Result<()> {
     let file_schema = Schema::new(vec![
         Field::new("id", DataType::Utf8, false),
         Field::new("sequence", DataType::Utf8, false),

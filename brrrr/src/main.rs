@@ -2,7 +2,7 @@
 // All Rights Reserved
 
 use std::fs::File;
-use std::io::{stdin, stdout, Result};
+use std::io::{self, stdin, stdout};
 use std::path::PathBuf;
 
 use bio::io::gff;
@@ -35,14 +35,23 @@ enum ParquetCompression {
     BROTLI,
 }
 
+fn file_exists(p: &str) -> Result<(), String> {
+    if !PathBuf::from(p).exists() {
+        return Err(format!("File path {:?} does not exist", p));
+    } else {
+        return Ok(());
+    }
+}
+
 #[derive(Subcommand)]
 enum Brrrr {
     #[clap(name = "fa2pq", about = "Converts a FASTA input to parquet.")]
     Fa2pq {
         /// The path where the input should be read from.
-        input_file_name: String,
+        #[clap(validator = file_exists)]
+        input_file_name: PathBuf,
         /// The path where the output should be written to.
-        output_file_name: String,
+        output_file_name: PathBuf,
         /// The compression mode for the parquet.
         #[clap(value_enum)]
         compression: Option<ParquetCompression>,
@@ -50,23 +59,26 @@ enum Brrrr {
     #[clap(name = "pq2fa", about = "Converts a parquet file to FASTA format.")]
     Pq2Fa {
         /// The path where the input should be read from.
-        input_file_name: String,
+        #[clap(validator = file_exists)]
+        input_file_name: PathBuf,
         /// The path where the output should be written to.
-        output_file_name: String,
+        output_file_name: PathBuf,
     },
     #[clap(name = "pq2fq", about = "Converts a parquet file to FASTQ format.")]
     Pq2Fq {
         /// The path where the input should be read from.
-        input_file_name: String,
+        #[clap(validator = file_exists)]
+        input_file_name: PathBuf,
         /// The path where the output should be written to.
-        output_file_name: String,
+        output_file_name: PathBuf,
     },
     #[clap(name = "fq2pq", about = "Converts a FASTQ input to parquet.")]
     Fq2pq {
         /// The path where the input should be read from.
-        input_file_name: String,
+        #[clap(validator = file_exists)]
+        input_file_name: PathBuf,
         /// The path where the output should be written to.
-        output_file_name: String,
+        output_file_name: PathBuf,
         /// The compression mode for the parquet.
         #[clap(value_enum)]
         compression: Option<ParquetCompression>,
@@ -79,9 +91,13 @@ enum Brrrr {
     #[clap(name = "gff2pq", about = "Converts a GFF-like input to parquet.")]
     Gff2pq {
         /// The path where the input should be read from.
-        input_file_name: String,
+        #[clap(validator = file_exists)]
+        input_file_name: PathBuf,
         /// The path where the output should be written to.
-        output_file_name: String,
+        output_file_name: PathBuf,
+        /// The compression mode for the parquet.
+        #[clap(value_enum)]
+        compression: Option<ParquetCompression>,
     },
     #[clap(name = "gff2jsonl", about = "Converts a GFF-like input to jsonl.")]
     Gff2jsonl {
@@ -109,7 +125,7 @@ enum Brrrr {
     },
 }
 
-fn main() -> Result<()> {
+fn main() -> io::Result<()> {
     let args = Cli::parse();
 
     match args.command {
@@ -126,20 +142,16 @@ fn main() -> Result<()> {
                 None => Compression::UNCOMPRESSED,
             };
 
-            parquet_writer::fa2pq(
-                input_file_name.as_str(),
-                output_file_name.as_str(),
-                parquet_compression,
-            )
+            parquet_writer::fa2pq(input_file_name, output_file_name, parquet_compression)
         }
         Brrrr::Pq2Fa {
             input_file_name,
             output_file_name,
-        } => parquet_reader::pq2fa(input_file_name.as_str(), output_file_name.as_str()),
+        } => parquet_reader::pq2fa(input_file_name, output_file_name),
         Brrrr::Pq2Fq {
             input_file_name,
             output_file_name,
-        } => parquet_reader::pq2fq(input_file_name.as_str(), output_file_name.as_str()),
+        } => parquet_reader::pq2fq(input_file_name, output_file_name),
         Brrrr::Fq2pq {
             input_file_name,
             output_file_name,
@@ -153,11 +165,7 @@ fn main() -> Result<()> {
                 None => Compression::UNCOMPRESSED,
             };
 
-            parquet_writer::fq2pq(
-                input_file_name.as_str(),
-                output_file_name.as_str(),
-                parquet_compression,
-            )
+            parquet_writer::fq2pq(input_file_name, output_file_name, parquet_compression)
         }
         Brrrr::Fa2csv { input } => match input {
             None => csv_writer::fa2csv(stdin(), &mut stdout()),
@@ -190,7 +198,17 @@ fn main() -> Result<()> {
         Brrrr::Gff2pq {
             input_file_name,
             output_file_name,
-        } => parquet_writer::gff2pq(input_file_name.as_str(), output_file_name.as_str()),
+            compression,
+        } => {
+            let parquet_compression = match compression {
+                Some(ParquetCompression::UNCOMPRESSED) => Compression::UNCOMPRESSED,
+                Some(ParquetCompression::GZIP) => Compression::GZIP,
+                Some(ParquetCompression::BROTLI) => Compression::BROTLI,
+                Some(ParquetCompression::SNAPPY) => Compression::SNAPPY,
+                None => Compression::UNCOMPRESSED,
+            };
+            parquet_writer::gff2pq(input_file_name, output_file_name, parquet_compression)
+        }
         Brrrr::Fq2jsonl { input } => match input {
             None => json_writer::fq2jsonl(stdin(), &mut stdout()),
             Some(input) => {
