@@ -9,24 +9,86 @@ use std::sync::Arc;
 use bio::io::fasta;
 use bio::io::fastq;
 
+use bio::io::gff;
+use bio::io::gff::GffType;
 use itertools::Itertools;
 
 use arrow::array::*;
 use arrow::datatypes::*;
 use arrow::record_batch::RecordBatch;
 use parquet::arrow::arrow_writer::ArrowWriter;
+use parquet::basic::Compression;
+use parquet::file::properties::WriterProperties;
+
+pub fn gff2pq(input: &str, output: &str) -> Result<()> {
+    let file_schema = Schema::new(vec![
+        Field::new("seqname", DataType::Utf8, false),
+        //Field::new("source", DataType::Utf8, true),
+        //Field::new("feature_type", DataType::Utf8, false),
+        //Field::new("start", DataType::Int64, false),
+        //Field::new("end", DataType::Int64, false),
+        //Field::new("score", DataType::Utf8, false),
+        //Field::new("strand", DataType::Utf8, false),
+        //Field::new("frame", DataType::Utf8, false),
+        Field::new(
+            "attributes",
+            DataType::Dictionary(Box::new(DataType::Utf8), Box::new(DataType::Utf8)),
+            false,
+        ),
+    ]);
+
+    let input_file = fs::File::open(input).expect("Error opening file.");
+    let mut reader = gff::Reader::new(input_file, GffType::GTF2);
+
+    let records = reader.records();
+
+    let file = fs::File::create(output).unwrap();
+    let mut writer = ArrowWriter::try_new(file, Arc::new(file_schema.clone()), None).unwrap();
+    let chunk_size = 2usize.pow(20);
+
+    for chunk in records.into_iter().chunks(chunk_size).into_iter() {
+        let mut seqname_builder = StringBuilder::new(2048);
+
+        for chunk_i in chunk {
+            let record = match chunk_i {
+                Ok(r) => r,
+                Err(error) => panic!("{}", error),
+            };
+
+            seqname_builder
+                .append_value(record.seqname())
+                .expect("Couldn't append seqname_builder.");
+        }
+
+        let seqname_array = seqname_builder.finish();
+
+        let rb = RecordBatch::try_new(Arc::new(file_schema.clone()), vec![Arc::new(seqname_array)])
+            .unwrap();
+
+        writer.write(&rb).expect("Couldn't write record batch.");
+    }
+
+    writer.close().expect("Couldn't close file.");
+
+    Ok(())
+}
 
 /// Converts a FASTA file to Parquet.
 ///
 /// # Arguments
 /// * `input` The string representing the path to the input fasta file.
 /// * `output` The string representing the path to the output parquet file.
-pub fn fa2pq(input: &str, output: &str) -> Result<()> {
+/// * `parquet_compression` The parquet compression to use.
+pub fn fa2pq(input: &str, output: &str, parquet_compression: Compression) -> Result<()> {
     let file_schema = Schema::new(vec![
         Field::new("id", DataType::Utf8, false),
         Field::new("description", DataType::Utf8, true),
         Field::new("sequence", DataType::Utf8, false),
     ]);
+
+    let props = WriterProperties::builder()
+        .set_compression(parquet_compression)
+        .set_statistics_enabled(true);
 
     let input_file = fs::File::open(input).expect("Error opening file.");
     let reader = fasta::Reader::new(input_file);
@@ -34,7 +96,8 @@ pub fn fa2pq(input: &str, output: &str) -> Result<()> {
     let records = reader.records();
 
     let file = fs::File::create(output).unwrap();
-    let mut writer = ArrowWriter::try_new(file, Arc::new(file_schema.clone()), None).unwrap();
+    let mut writer =
+        ArrowWriter::try_new(file, Arc::new(file_schema.clone()), Some(props.build())).unwrap();
 
     let chunk_size = 2usize.pow(20);
     for chunk in records.into_iter().chunks(chunk_size).into_iter() {
@@ -93,7 +156,8 @@ pub fn fa2pq(input: &str, output: &str) -> Result<()> {
 /// # Arguments
 /// * `input` The string representing the path to the input fasta file.
 /// * `output` The string representing the path to the output parquet file.
-pub fn fq2pq(input: &str, output: &str) -> Result<()> {
+/// * `parquet_compression` The parquet compression to use.
+pub fn fq2pq(input: &str, output: &str, parquet_compression: Compression) -> Result<()> {
     let file_schema = Schema::new(vec![
         Field::new("id", DataType::Utf8, false),
         Field::new("sequence", DataType::Utf8, false),
@@ -101,13 +165,18 @@ pub fn fq2pq(input: &str, output: &str) -> Result<()> {
         Field::new("quality", DataType::Utf8, false),
     ]);
 
+    let props = WriterProperties::builder()
+        .set_compression(parquet_compression)
+        .set_statistics_enabled(true);
+
     let input_file = fs::File::open(input).expect("Error opening file.");
     let reader = fastq::Reader::new(input_file);
 
     let records = reader.records();
 
     let file = fs::File::create(output).unwrap();
-    let mut writer = ArrowWriter::try_new(file, Arc::new(file_schema.clone()), None).unwrap();
+    let mut writer =
+        ArrowWriter::try_new(file, Arc::new(file_schema.clone()), Some(props.build())).unwrap();
 
     let chunk_size = 2usize.pow(20);
     for chunk in records.into_iter().chunks(chunk_size).into_iter() {

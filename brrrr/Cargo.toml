@@ -12,6 +12,8 @@ path = "src/main.rs"
 brrrr-lib = {path = "../brrrr-lib"}
 bio = "0.41"
 clap = {version = "3.2", features = ["derive"]}
+parquet = "15.0"
+arrow = "15.0"
 
 [dev-dependencies]
 assert_cmd = "1.0.1"

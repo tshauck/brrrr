@@ -12,9 +12,10 @@ use brrrr_lib::csv_writer;
 use brrrr_lib::json_writer;
 use brrrr_lib::parquet_reader;
 use brrrr_lib::parquet_writer;
+use parquet::basic::Compression;
 
 /// The Enum that represents the underlying CLI.
-#[derive(Debug, Parser)]
+#[derive(Parser)]
 #[clap(
     name = "brrrr",
     about = "Commandline utilities for modern biology and chemistry informatics.",
@@ -26,7 +27,15 @@ struct Cli {
     command: Brrrr,
 }
 
-#[derive(Debug, Subcommand)]
+#[derive(clap::ValueEnum, Clone)]
+enum ParquetCompression {
+    UNCOMPRESSED,
+    SNAPPY,
+    GZIP,
+    BROTLI,
+}
+
+#[derive(Subcommand)]
 enum Brrrr {
     #[clap(name = "fa2pq", about = "Converts a FASTA input to parquet.")]
     Fa2pq {
@@ -34,6 +43,9 @@ enum Brrrr {
         input_file_name: String,
         /// The path where the output should be written to.
         output_file_name: String,
+        /// The compression mode for the parquet.
+        #[clap(value_enum)]
+        compression: Option<ParquetCompression>,
     },
     #[clap(name = "pq2fa", about = "Converts a parquet file to FASTA format.")]
     Pq2Fa {
@@ -55,11 +67,21 @@ enum Brrrr {
         input_file_name: String,
         /// The path where the output should be written to.
         output_file_name: String,
+        /// The compression mode for the parquet.
+        #[clap(value_enum)]
+        compression: Option<ParquetCompression>,
     },
     #[clap(name = "fa2jsonl", about = "Converts a FASTA input to jsonl.")]
     Fa2jsonl {
         #[clap(parse(from_os_str))]
         input: Option<PathBuf>,
+    },
+    #[clap(name = "gff2pq", about = "Converts a GFF-like input to parquet.")]
+    Gff2pq {
+        /// The path where the input should be read from.
+        input_file_name: String,
+        /// The path where the output should be written to.
+        output_file_name: String,
     },
     #[clap(name = "gff2jsonl", about = "Converts a GFF-like input to jsonl.")]
     Gff2jsonl {
@@ -94,7 +116,22 @@ fn main() -> Result<()> {
         Brrrr::Fa2pq {
             input_file_name,
             output_file_name,
-        } => parquet_writer::fa2pq(input_file_name.as_str(), output_file_name.as_str()),
+            compression,
+        } => {
+            let parquet_compression = match compression {
+                Some(ParquetCompression::UNCOMPRESSED) => Compression::UNCOMPRESSED,
+                Some(ParquetCompression::GZIP) => Compression::GZIP,
+                Some(ParquetCompression::BROTLI) => Compression::BROTLI,
+                Some(ParquetCompression::SNAPPY) => Compression::SNAPPY,
+                None => Compression::UNCOMPRESSED,
+            };
+
+            parquet_writer::fa2pq(
+                input_file_name.as_str(),
+                output_file_name.as_str(),
+                parquet_compression,
+            )
+        }
         Brrrr::Pq2Fa {
             input_file_name,
             output_file_name,
@@ -106,7 +143,22 @@ fn main() -> Result<()> {
         Brrrr::Fq2pq {
             input_file_name,
             output_file_name,
-        } => parquet_writer::fq2pq(input_file_name.as_str(), output_file_name.as_str()),
+            compression,
+        } => {
+            let parquet_compression = match compression {
+                Some(ParquetCompression::UNCOMPRESSED) => Compression::UNCOMPRESSED,
+                Some(ParquetCompression::GZIP) => Compression::GZIP,
+                Some(ParquetCompression::BROTLI) => Compression::BROTLI,
+                Some(ParquetCompression::SNAPPY) => Compression::SNAPPY,
+                None => Compression::UNCOMPRESSED,
+            };
+
+            parquet_writer::fq2pq(
+                input_file_name.as_str(),
+                output_file_name.as_str(),
+                parquet_compression,
+            )
+        }
         Brrrr::Fa2csv { input } => match input {
             None => csv_writer::fa2csv(stdin(), &mut stdout()),
             Some(input) => {
@@ -135,6 +187,10 @@ fn main() -> Result<()> {
                 json_writer::gff2jsonl(f, &mut stdout(), gff_type)
             }
         },
+        Brrrr::Gff2pq {
+            input_file_name,
+            output_file_name,
+        } => parquet_writer::gff2pq(input_file_name.as_str(), output_file_name.as_str()),
         Brrrr::Fq2jsonl { input } => match input {
             None => json_writer::fq2jsonl(stdin(), &mut stdout()),
             Some(input) => {
