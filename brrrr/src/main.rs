@@ -33,6 +33,23 @@ enum ParquetCompression {
     SNAPPY,
     GZIP,
     BROTLI,
+    LZO,
+    LZ4,
+    ZSTD,
+}
+
+impl Into<Compression> for ParquetCompression {
+    fn into(self) -> Compression {
+        match self {
+            ParquetCompression::UNCOMPRESSED => Compression::UNCOMPRESSED,
+            ParquetCompression::GZIP => Compression::GZIP,
+            ParquetCompression::BROTLI => Compression::BROTLI,
+            ParquetCompression::SNAPPY => Compression::SNAPPY,
+            ParquetCompression::LZO => Compression::LZO,
+            ParquetCompression::LZ4 => Compression::LZ4,
+            ParquetCompression::ZSTD => Compression::ZSTD,
+        }
+    }
 }
 
 fn file_exists(p: &str) -> Result<(), String> {
@@ -42,7 +59,6 @@ fn file_exists(p: &str) -> Result<(), String> {
         return Ok(());
     }
 }
-
 #[derive(Subcommand)]
 enum Brrrr {
     #[clap(name = "fa2pq", about = "Converts a FASTA input to parquet.")]
@@ -53,8 +69,8 @@ enum Brrrr {
         /// The path where the output should be written to.
         output_file_name: PathBuf,
         /// The compression mode for the parquet.
-        #[clap(value_enum)]
-        compression: Option<ParquetCompression>,
+        #[clap(value_enum, default_value = "uncompressed")]
+        compression: ParquetCompression,
     },
     #[clap(name = "pq2fa", about = "Converts a parquet file to FASTA format.")]
     Pq2Fa {
@@ -80,8 +96,8 @@ enum Brrrr {
         /// The path where the output should be written to.
         output_file_name: PathBuf,
         /// The compression mode for the parquet.
-        #[clap(value_enum)]
-        compression: Option<ParquetCompression>,
+        #[clap(value_enum, default_value = "uncompressed")]
+        compression: ParquetCompression,
     },
     #[clap(name = "fa2jsonl", about = "Converts a FASTA input to jsonl.")]
     Fa2jsonl {
@@ -96,8 +112,8 @@ enum Brrrr {
         /// The path where the output should be written to.
         output_file_name: PathBuf,
         /// The compression mode for the parquet.
-        #[clap(value_enum)]
-        compression: Option<ParquetCompression>,
+        #[clap(value_enum, default_value = "uncompressed")]
+        compression: ParquetCompression,
     },
     #[clap(name = "gff2jsonl", about = "Converts a GFF-like input to jsonl.")]
     Gff2jsonl {
@@ -133,17 +149,7 @@ fn main() -> io::Result<()> {
             input_file_name,
             output_file_name,
             compression,
-        } => {
-            let parquet_compression = match compression {
-                Some(ParquetCompression::UNCOMPRESSED) => Compression::UNCOMPRESSED,
-                Some(ParquetCompression::GZIP) => Compression::GZIP,
-                Some(ParquetCompression::BROTLI) => Compression::BROTLI,
-                Some(ParquetCompression::SNAPPY) => Compression::SNAPPY,
-                None => Compression::UNCOMPRESSED,
-            };
-
-            parquet_writer::fa2pq(input_file_name, output_file_name, parquet_compression)
-        }
+        } => parquet_writer::fa2pq(input_file_name, output_file_name, compression.into()),
         Brrrr::Pq2Fa {
             input_file_name,
             output_file_name,
@@ -156,17 +162,7 @@ fn main() -> io::Result<()> {
             input_file_name,
             output_file_name,
             compression,
-        } => {
-            let parquet_compression = match compression {
-                Some(ParquetCompression::UNCOMPRESSED) => Compression::UNCOMPRESSED,
-                Some(ParquetCompression::GZIP) => Compression::GZIP,
-                Some(ParquetCompression::BROTLI) => Compression::BROTLI,
-                Some(ParquetCompression::SNAPPY) => Compression::SNAPPY,
-                None => Compression::UNCOMPRESSED,
-            };
-
-            parquet_writer::fq2pq(input_file_name, output_file_name, parquet_compression)
-        }
+        } => parquet_writer::fq2pq(input_file_name, output_file_name, compression.into()),
         Brrrr::Fa2csv { input } => match input {
             None => csv_writer::fa2csv(stdin(), &mut stdout()),
             Some(input) => {
@@ -199,16 +195,7 @@ fn main() -> io::Result<()> {
             input_file_name,
             output_file_name,
             compression,
-        } => {
-            let parquet_compression = match compression {
-                Some(ParquetCompression::UNCOMPRESSED) => Compression::UNCOMPRESSED,
-                Some(ParquetCompression::GZIP) => Compression::GZIP,
-                Some(ParquetCompression::BROTLI) => Compression::BROTLI,
-                Some(ParquetCompression::SNAPPY) => Compression::SNAPPY,
-                None => Compression::UNCOMPRESSED,
-            };
-            parquet_writer::gff2pq(input_file_name, output_file_name, parquet_compression)
-        }
+        } => parquet_writer::gff2pq(input_file_name, output_file_name, compression.into()),
         Brrrr::Fq2jsonl { input } => match input {
             None => json_writer::fq2jsonl(stdin(), &mut stdout()),
             Some(input) => {
