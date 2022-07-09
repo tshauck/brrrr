@@ -23,16 +23,26 @@ use parquet::file::properties::WriterProperties;
 pub fn gff2pq(input: &str, output: &str) -> Result<()> {
     let file_schema = Schema::new(vec![
         Field::new("seqname", DataType::Utf8, false),
-        //Field::new("source", DataType::Utf8, true),
-        //Field::new("feature_type", DataType::Utf8, false),
-        //Field::new("start", DataType::Int64, false),
-        //Field::new("end", DataType::Int64, false),
-        //Field::new("score", DataType::Utf8, false),
-        //Field::new("strand", DataType::Utf8, false),
-        //Field::new("frame", DataType::Utf8, false),
+        Field::new("source", DataType::Utf8, true),
+        Field::new("feature_type", DataType::Utf8, false),
+        Field::new("start", DataType::Int64, false),
+        Field::new("end", DataType::Int64, false),
+        Field::new("score", DataType::Int64, false),
+        Field::new("strand", DataType::Utf8, false),
+        Field::new("frame", DataType::Utf8, false),
         Field::new(
             "attributes",
-            DataType::Dictionary(Box::new(DataType::Utf8), Box::new(DataType::Utf8)),
+            DataType::Map(
+                Box::new(Field::new(
+                    "entries",
+                    DataType::Struct(vec![
+                        Field::new("keys", DataType::Utf8, false),
+                        Field::new("values", DataType::Utf8, true),
+                    ]),
+                    false,
+                )),
+                false,
+            ),
             false,
         ),
     ]);
@@ -48,6 +58,17 @@ pub fn gff2pq(input: &str, output: &str) -> Result<()> {
 
     for chunk in records.into_iter().chunks(chunk_size).into_iter() {
         let mut seqname_builder = StringBuilder::new(2048);
+        let mut source_builder = StringBuilder::new(2048);
+        let mut feature_type_builder = StringBuilder::new(2048);
+        let mut start_builder = Int64Builder::new(2048);
+        let mut end_builder = Int64Builder::new(2048);
+        let mut score_builder = Int64Builder::new(2048);
+        let mut strand_builder = StringBuilder::new(2048);
+        let mut frame_builder = StringBuilder::new(2048);
+
+        let key_builder = StringBuilder::new(20);
+        let value_builder = StringBuilder::new(20);
+        let mut att_builder = MapBuilder::new(None, key_builder, value_builder);
 
         for chunk_i in chunk {
             let record = match chunk_i {
@@ -58,12 +79,80 @@ pub fn gff2pq(input: &str, output: &str) -> Result<()> {
             seqname_builder
                 .append_value(record.seqname())
                 .expect("Couldn't append seqname_builder.");
+
+            source_builder
+                .append_value(record.source())
+                .expect("Couldn't append seqname_builder.");
+
+            feature_type_builder
+                .append_value(record.feature_type())
+                .expect("Couldn't append seqname_builder.");
+
+            start_builder
+                .append_value(*record.start() as i64)
+                .expect("Couldn't append seqname_builder.");
+
+            end_builder
+                .append_value(*record.end() as i64)
+                .expect("Couldn't append seqname_builder.");
+
+            match record.score() {
+                Some(score) => score_builder
+                    .append_value(score as i64)
+                    .expect("Couldn't append seqname_builder."),
+                None => score_builder.append_null().expect("error"),
+            }
+
+            match record.strand() {
+                Some(strand) => strand_builder
+                    .append_value(strand.to_string())
+                    .expect("Couldn't append seqname_builder."),
+                None => strand_builder.append_null().expect("error"),
+            }
+
+            frame_builder
+                .append_value(record.frame())
+                .expect("Couldn't append seqname_builder.");
+
+            let record_key_builder = att_builder.keys();
+            for k in record.attributes().keys() {
+                record_key_builder.append_value(k).unwrap();
+            }
+
+            let record_value_builder = att_builder.values();
+            for (_, v) in record.attributes().iter() {
+                record_value_builder.append_value(v).unwrap();
+            }
+
+            att_builder.append(true).unwrap();
         }
 
         let seqname_array = seqname_builder.finish();
+        let source_array = source_builder.finish();
+        let feature_type_array = feature_type_builder.finish();
+        let start_array = start_builder.finish();
+        let end_array = end_builder.finish();
+        let score_array = score_builder.finish();
+        let strand_array = strand_builder.finish();
+        let frame_array = frame_builder.finish();
 
-        let rb = RecordBatch::try_new(Arc::new(file_schema.clone()), vec![Arc::new(seqname_array)])
-            .unwrap();
+        let att_array = att_builder.finish();
+
+        let rb = RecordBatch::try_new(
+            Arc::new(file_schema.clone()),
+            vec![
+                Arc::new(seqname_array),
+                Arc::new(source_array),
+                Arc::new(feature_type_array),
+                Arc::new(start_array),
+                Arc::new(end_array),
+                Arc::new(score_array),
+                Arc::new(strand_array),
+                Arc::new(frame_array),
+                Arc::new(att_array),
+            ],
+        )
+        .unwrap();
 
         writer.write(&rb).expect("Couldn't write record batch.");
     }
