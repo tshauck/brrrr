@@ -52,6 +52,21 @@ impl Into<Compression> for ParquetCompression {
     }
 }
 
+#[derive(clap::ValueEnum, Clone)]
+enum CliBioFileCompression {
+    UNCOMPRESSED,
+    GZIP,
+}
+
+impl Into<parquet_writer::BioFileCompression> for CliBioFileCompression {
+    fn into(self) -> parquet_writer::BioFileCompression {
+        match self {
+            CliBioFileCompression::UNCOMPRESSED => parquet_writer::BioFileCompression::UNCOMPRESSED,
+            CliBioFileCompression::GZIP => parquet_writer::BioFileCompression::GZIP,
+        }
+    }
+}
+
 fn file_exists(p: &str) -> Result<(), String> {
     if !PathBuf::from(p).exists() {
         return Err(format!("File path {:?} does not exist", p));
@@ -71,6 +86,9 @@ enum Brrrr {
         /// The compression mode for the parquet.
         #[clap(value_enum, default_value = "uncompressed")]
         compression: ParquetCompression,
+        /// The bio file compression.
+        #[clap(value_enum, default_value = "uncompressed")]
+        bio_file_compression: CliBioFileCompression,
     },
     #[clap(name = "pq2fa", about = "Converts a parquet file to FASTA format.")]
     Pq2Fa {
@@ -149,7 +167,13 @@ fn main() -> io::Result<()> {
             input_file_name,
             output_file_name,
             compression,
-        } => parquet_writer::fa2pq(input_file_name, output_file_name, compression.into()),
+            bio_file_compression,
+        } => parquet_writer::fa2pq(
+            input_file_name,
+            output_file_name,
+            compression.into(),
+            bio_file_compression.into(),
+        ),
         Brrrr::Pq2Fa {
             input_file_name,
             output_file_name,

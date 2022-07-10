@@ -2,17 +2,20 @@
 // All Rights Reserved
 
 use std::fs;
+use std::io::BufRead;
+use std::io::BufReader;
 use std::io::Result;
 use std::path::Path;
 use std::str;
 use std::sync::Arc;
 
-use bio::io::fasta;
 use bio::io::fastq;
 
 use bio::io::gff;
 use bio::io::gff::GffType;
+use flate2::bufread::GzDecoder;
 use itertools::Itertools;
+use noodles::fasta as nfasta;
 
 use arrow::array::*;
 use arrow::datatypes::*;
@@ -20,6 +23,11 @@ use arrow::record_batch::RecordBatch;
 use parquet::arrow::arrow_writer::ArrowWriter;
 use parquet::basic::Compression;
 use parquet::file::properties::WriterProperties;
+
+pub enum BioFileCompression {
+    UNCOMPRESSED,
+    GZIP,
+}
 
 /// Converts a GFF file to Parquet.
 ///
@@ -174,13 +182,11 @@ pub fn gff2pq<P: AsRef<Path>>(input: P, output: P, parquet_compression: Compress
     Ok(())
 }
 
-/// Converts a FASTA file to Parquet.
-///
-/// # Arguments
-/// * `input` The the path to the input fasta file.
-/// * `output` The the path to the output parquet file.
-/// * `parquet_compression` The parquet compression to use.
-pub fn fa2pq<P: AsRef<Path>>(input: P, output: P, parquet_compression: Compression) -> Result<()> {
+fn write_records_to_file<P: AsRef<Path>, R: BufRead>(
+    mut reader: nfasta::Reader<R>,
+    output: P,
+    parquet_compression: Compression,
+) -> Result<()> {
     let file_schema = Schema::new(vec![
         Field::new("id", DataType::Utf8, false),
         Field::new("description", DataType::Utf8, true),
@@ -190,18 +196,12 @@ pub fn fa2pq<P: AsRef<Path>>(input: P, output: P, parquet_compression: Compressi
     let props = WriterProperties::builder()
         .set_compression(parquet_compression)
         .set_statistics_enabled(true);
-
-    let input_file = fs::File::open(input).expect("Error opening file.");
-    let reader = fasta::Reader::new(input_file);
-
-    let records = reader.records();
-
     let file = fs::File::create(output).unwrap();
     let mut writer =
         ArrowWriter::try_new(file, Arc::new(file_schema.clone()), Some(props.build())).unwrap();
 
     let chunk_size = 2usize.pow(20);
-    for chunk in records.into_iter().chunks(chunk_size).into_iter() {
+    for chunk in reader.records().into_iter().chunks(chunk_size).into_iter() {
         let mut id_builder = StringBuilder::new(2048);
         let mut description_builder = StringBuilder::new(2048);
         let mut seq_builder = StringBuilder::new(2048);
@@ -213,10 +213,10 @@ pub fn fa2pq<P: AsRef<Path>>(input: P, output: P, parquet_compression: Compressi
             };
 
             id_builder
-                .append_value(record.id())
+                .append_value(record.name())
                 .expect("Couldn't append id.");
 
-            match record.desc() {
+            match record.description() {
                 Some(x) => description_builder
                     .append_value(x)
                     .expect("Couldn't append description."),
@@ -225,7 +225,7 @@ pub fn fa2pq<P: AsRef<Path>>(input: P, output: P, parquet_compression: Compressi
                     .expect("Couldn't append null description."),
             }
 
-            let sequence = str::from_utf8(record.seq()).unwrap();
+            let sequence = str::from_utf8(record.sequence().as_ref()).expect("error");
             seq_builder
                 .append_value(sequence)
                 .expect("Couldn't add sequence.");
@@ -250,6 +250,34 @@ pub fn fa2pq<P: AsRef<Path>>(input: P, output: P, parquet_compression: Compressi
 
     writer.close().expect("Couldn't close file.");
     Ok(())
+}
+
+/// Converts a FASTA file to Parquet.
+///
+/// # Arguments
+/// * `input` The the path to the input fasta file.
+/// * `output` The the path to the output parquet file.
+/// * `parquet_compression` The parquet compression to use.
+/// * `bio_file_compression` The compression for the input bio file.
+pub fn fa2pq<P: AsRef<Path>>(
+    input: P,
+    output: P,
+    parquet_compression: Compression,
+    bio_file_compression: BioFileCompression,
+) -> Result<()> {
+    match bio_file_compression {
+        BioFileCompression::GZIP => {
+            let file = fs::File::open(input).expect("error");
+            let gz = GzDecoder::new(BufReader::new(file));
+            let reader = nfasta::Reader::new(BufReader::new(gz));
+            write_records_to_file(reader, output, parquet_compression)
+        }
+        BioFileCompression::UNCOMPRESSED => {
+            let file = fs::File::open(input).expect("error");
+            let reader = nfasta::Reader::new(BufReader::new(file));
+            write_records_to_file(reader, output, parquet_compression)
+        }
+    }
 }
 
 /// Converts a FASTQ file to Parquet.
