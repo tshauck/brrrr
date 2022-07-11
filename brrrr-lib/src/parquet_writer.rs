@@ -6,16 +6,13 @@ use std::io::BufRead;
 use std::io::BufReader;
 use std::io::Result;
 use std::path::Path;
-use std::str;
 use std::sync::Arc;
 
-use bio::io::fastq;
-
-use bio::io::gff;
-use bio::io::gff::GffType;
 use flate2::bufread::GzDecoder;
 use itertools::Itertools;
 use noodles::fasta as nfasta;
+use noodles::fastq;
+use noodles::gff;
 
 use arrow::array::*;
 use arrow::datatypes::*;
@@ -23,6 +20,8 @@ use arrow::record_batch::RecordBatch;
 use parquet::arrow::arrow_writer::ArrowWriter;
 use parquet::basic::Compression;
 use parquet::file::properties::WriterProperties;
+
+use crate::types::{FastaRecord, FastqRecord, GffRecord};
 
 pub enum BioFileCompression {
     UNCOMPRESSED,
@@ -67,7 +66,7 @@ pub fn gff2pq<P: AsRef<Path>>(input: P, output: P, parquet_compression: Compress
     ]);
 
     let input_file = fs::File::open(input).expect("Error opening file.");
-    let mut reader = gff::Reader::new(input_file, GffType::GTF2);
+    let mut reader = gff::Reader::new(BufReader::new(input_file));
 
     let records = reader.records();
 
@@ -96,55 +95,57 @@ pub fn gff2pq<P: AsRef<Path>>(input: P, output: P, parquet_compression: Compress
                 Err(error) => panic!("{}", error),
             };
 
+            let gff_type = GffRecord::from(record);
+
             seqname_builder
-                .append_value(record.seqname())
+                .append_value(gff_type.seqname)
                 .expect("Couldn't append seqname_builder.");
 
             source_builder
-                .append_value(record.source())
+                .append_value(gff_type.source)
                 .expect("Couldn't append seqname_builder.");
 
             feature_type_builder
-                .append_value(record.feature_type())
+                .append_value(gff_type.feature_type)
                 .expect("Couldn't append seqname_builder.");
 
             start_builder
-                .append_value(*record.start() as i64)
+                .append_value(gff_type.start as i64)
                 .expect("Couldn't append seqname_builder.");
 
             end_builder
-                .append_value(*record.end() as i64)
+                .append_value(gff_type.start as i64)
                 .expect("Couldn't append seqname_builder.");
 
-            match record.score() {
+            match gff_type.score {
                 Some(score) => score_builder
                     .append_value(score as i64)
                     .expect("Couldn't append seqname_builder."),
                 None => score_builder.append_null().expect("error"),
             }
 
-            match record.strand() {
-                Some(strand) => strand_builder
-                    .append_value(strand.to_string())
+            strand_builder
+                .append_value(gff_type.strand)
+                .expect("Couldn't append strand.");
+
+            match gff_type.frame {
+                Some(frame) => frame_builder
+                    .append_value(frame)
                     .expect("Couldn't append seqname_builder."),
-                None => strand_builder.append_null().expect("error"),
+                None => frame_builder.append_null().expect("error"),
             }
 
-            frame_builder
-                .append_value(record.frame())
-                .expect("Couldn't append seqname_builder.");
+            //let record_key_builder = att_builder.keys();
+            //for k in record.attributes().keys() {
+            //record_key_builder.append_value(k).unwrap();
+            //}
 
-            let record_key_builder = att_builder.keys();
-            for k in record.attributes().keys() {
-                record_key_builder.append_value(k).unwrap();
-            }
+            //let record_value_builder = att_builder.values();
+            //for (_, v) in record.attributes().iter() {
+            //record_value_builder.append_value(v).unwrap();
+            //}
 
-            let record_value_builder = att_builder.values();
-            for (_, v) in record.attributes().iter() {
-                record_value_builder.append_value(v).unwrap();
-            }
-
-            att_builder.append(true).unwrap();
+            //att_builder.append(true).unwrap();
         }
 
         let seqname_array = seqname_builder.finish();
@@ -208,15 +209,15 @@ fn write_records_to_file<P: AsRef<Path>, R: BufRead>(
 
         for chunk_i in chunk {
             let record = match chunk_i {
-                Ok(r) => r,
+                Ok(r) => FastaRecord::from(r),
                 Err(error) => panic!("{}", error),
             };
 
             id_builder
-                .append_value(record.name())
+                .append_value(record.id)
                 .expect("Couldn't append id.");
 
-            match record.description() {
+            match record.desc {
                 Some(x) => description_builder
                     .append_value(x)
                     .expect("Couldn't append description."),
@@ -225,9 +226,8 @@ fn write_records_to_file<P: AsRef<Path>, R: BufRead>(
                     .expect("Couldn't append null description."),
             }
 
-            let sequence = str::from_utf8(record.sequence().as_ref()).expect("error");
             seq_builder
-                .append_value(sequence)
+                .append_value(record.seq)
                 .expect("Couldn't add sequence.");
         }
 
@@ -299,7 +299,7 @@ pub fn fq2pq<P: AsRef<Path>>(input: P, output: P, parquet_compression: Compressi
         .set_statistics_enabled(true);
 
     let input_file = fs::File::open(input).expect("Error opening file.");
-    let reader = fastq::Reader::new(input_file);
+    let mut reader = fastq::Reader::new(BufReader::new(input_file));
 
     let records = reader.records();
 
@@ -320,11 +320,13 @@ pub fn fq2pq<P: AsRef<Path>>(input: P, output: P, parquet_compression: Compressi
                 Err(error) => panic!("{}", error),
             };
 
+            let fastq_record = FastqRecord::from(record);
+
             id_builder
-                .append_value(record.id())
+                .append_value(fastq_record.id)
                 .expect("Couldn't append id.");
 
-            match record.desc() {
+            match fastq_record.desc {
                 Some(x) => description_builder
                     .append_value(x)
                     .expect("Couldn't append description."),
@@ -333,14 +335,12 @@ pub fn fq2pq<P: AsRef<Path>>(input: P, output: P, parquet_compression: Compressi
                     .expect("Couldn't append null description."),
             }
 
-            let sequence = str::from_utf8(record.seq()).unwrap();
             seq_builder
-                .append_value(sequence)
+                .append_value(fastq_record.seq)
                 .expect("Couldn't add sequence.");
 
-            let quality = str::from_utf8(record.qual()).unwrap();
             quality_builder
-                .append_value(quality)
+                .append_value(fastq_record.quality)
                 .expect("Couldn't add sequence.");
         }
 

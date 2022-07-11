@@ -2,17 +2,20 @@
 // All Rights Reserved
 /// The `json_writer` module provides an implementation for the `RecordWriter` interface to read
 /// and write from json.
-use std::io::{ErrorKind, Read, Result, Write};
+use std::io::{BufRead, ErrorKind, Result, Write};
 
 use serde::ser::Serialize;
 
+use crate::types::FastaRecord;
+use crate::types::FastqRecord;
+use crate::types::GffRecord;
 use crate::writer;
 
 use writer::RecordWriter;
 
-use bio::io::fasta;
-use bio::io::fastq;
-use bio::io::gff;
+use noodles::fasta;
+use noodles::fastq;
+use noodles::gff;
 
 /// JsonRecordWriter holds a writer, and outputs FASTA records as newline delimited json.
 pub struct JsonRecordWriter<W: Write> {
@@ -40,15 +43,15 @@ impl<W: Write> writer::RecordWriter for JsonRecordWriter<W> {
 ///
 /// # Arguments
 ///
-/// * `input` an input that implements the Read trait.
+/// * `input` an input that implements the BufRead trait.
 /// * `output` an output that implements the Write trait.
-pub fn fq2jsonl<R: Read, W: Write>(input: R, output: &mut W) -> Result<()> {
-    let reader = fastq::Reader::new(input);
+pub fn fq2jsonl<R: BufRead, W: Write>(input: R, output: &mut W) -> Result<()> {
+    let mut reader = fastq::Reader::new(input);
     let record_writer = &mut JsonRecordWriter::new(output);
 
     for read_record in reader.records() {
         let record = read_record.expect("Error parsing record.");
-        let write_op = record_writer.write_serde_record(record);
+        let write_op = record_writer.write_serde_record(FastqRecord::from(record));
 
         if let Err(e) = write_op {
             match e.kind() {
@@ -66,13 +69,13 @@ pub fn fq2jsonl<R: Read, W: Write>(input: R, output: &mut W) -> Result<()> {
 ///
 /// * `input` an input that implements the Read trait.
 /// * `output` an output that implements the Write trait.
-pub fn fa2jsonl<R: Read, W: Write>(input: R, output: &mut W) -> Result<()> {
-    let reader = fasta::Reader::new(input);
+pub fn fa2jsonl<R: BufRead, W: Write>(input: R, output: &mut W) -> Result<()> {
+    let mut reader = fasta::Reader::new(input);
     let record_writer = &mut JsonRecordWriter::new(output);
 
     for read_record in reader.records() {
         let record = read_record.expect("Error parsing record.");
-        let write_op = record_writer.write_serde_record(record);
+        let write_op = record_writer.write_serde_record(FastaRecord::from(record));
 
         if let Err(e) = write_op {
             match e.kind() {
@@ -90,18 +93,13 @@ pub fn fa2jsonl<R: Read, W: Write>(input: R, output: &mut W) -> Result<()> {
 ///
 /// * `input` an input that implements the Read trait.
 /// * `output` an output that implements the Write trait.
-/// * `gff_type` the underlying gff type.
-pub fn gff2jsonl<R: Read, W: Write>(
-    input: R,
-    output: &mut W,
-    gff_type: gff::GffType,
-) -> Result<()> {
-    let mut reader = gff::Reader::new(input, gff_type);
+pub fn gff2jsonl<R: BufRead, W: Write>(input: R, output: &mut W) -> Result<()> {
+    let mut reader = gff::Reader::new(input);
     let record_writer = &mut JsonRecordWriter::new(output);
 
     for read_record in reader.records() {
         let record = read_record.expect("Error parsing record.");
-        let write_op = record_writer.write_serde_record(record);
+        let write_op = record_writer.write_serde_record(GffRecord::from(record));
 
         if let Err(e) = write_op {
             match e.kind() {

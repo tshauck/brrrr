@@ -2,10 +2,9 @@
 // All Rights Reserved
 
 use std::fs::File;
-use std::io::{self, stdin, stdout};
+use std::io::{self, stdin, stdout, BufReader};
 use std::path::PathBuf;
 
-use bio::io::gff;
 use clap::{Parser, Subcommand};
 
 use brrrr_lib::csv_writer;
@@ -84,11 +83,11 @@ enum Brrrr {
         /// The path where the output should be written to.
         output_file_name: PathBuf,
         /// The compression mode for the parquet.
-        #[clap(value_enum, default_value = "uncompressed")]
-        compression: ParquetCompression,
+        #[clap(short, long, value_enum, default_value = "uncompressed")]
+        output_compression: ParquetCompression,
         /// The bio file compression.
-        #[clap(value_enum, default_value = "uncompressed")]
-        bio_file_compression: CliBioFileCompression,
+        #[clap(short, long, value_enum, default_value = "uncompressed")]
+        input_compression: CliBioFileCompression,
     },
     #[clap(name = "pq2fa", about = "Converts a parquet file to FASTA format.")]
     Pq2Fa {
@@ -137,10 +136,6 @@ enum Brrrr {
     Gff2jsonl {
         #[clap(parse(from_os_str))]
         input: Option<PathBuf>,
-
-        #[clap(short, long, default_value = "gff3")]
-        /// The specific GFF format: gff3, gff2, or gft
-        gff_type: gff::GffType,
     },
     #[clap(name = "fq2jsonl", about = "Converts a FASTQ input to jsonl.")]
     Fq2jsonl {
@@ -166,13 +161,13 @@ fn main() -> io::Result<()> {
         Brrrr::Fa2pq {
             input_file_name,
             output_file_name,
-            compression,
-            bio_file_compression,
+            output_compression,
+            input_compression,
         } => parquet_writer::fa2pq(
             input_file_name,
             output_file_name,
-            compression.into(),
-            bio_file_compression.into(),
+            output_compression.into(),
+            input_compression.into(),
         ),
         Brrrr::Pq2Fa {
             input_file_name,
@@ -188,31 +183,31 @@ fn main() -> io::Result<()> {
             compression,
         } => parquet_writer::fq2pq(input_file_name, output_file_name, compression.into()),
         Brrrr::Fa2csv { input } => match input {
-            None => csv_writer::fa2csv(stdin(), &mut stdout()),
+            None => csv_writer::fa2csv(stdin().lock(), &mut stdout()),
             Some(input) => {
                 let f = File::open(input).expect("Error opening file.");
-                csv_writer::fa2csv(f, &mut stdout())
+                csv_writer::fa2csv(BufReader::new(f), &mut stdout())
             }
         },
         Brrrr::Fq2csv { input } => match input {
-            None => csv_writer::fq2csv(stdin(), &mut stdout()),
+            None => csv_writer::fq2csv(stdin().lock(), &mut stdout()),
             Some(input) => {
                 let f = File::open(input).expect("Error opening file.");
-                csv_writer::fq2csv(f, &mut stdout())
+                csv_writer::fq2csv(BufReader::new(f), &mut stdout())
             }
         },
         Brrrr::Fa2jsonl { input } => match input {
-            None => json_writer::fa2jsonl(stdin(), &mut stdout()),
+            None => json_writer::fa2jsonl(stdin().lock(), &mut stdout()),
             Some(input) => {
                 let f = File::open(input).expect("Error opening file.");
-                json_writer::fa2jsonl(f, &mut stdout())
+                json_writer::fa2jsonl(BufReader::new(f), &mut stdout())
             }
         },
-        Brrrr::Gff2jsonl { input, gff_type } => match input {
-            None => json_writer::gff2jsonl(stdin(), &mut stdout(), gff_type),
+        Brrrr::Gff2jsonl { input } => match input {
+            None => json_writer::gff2jsonl(stdin().lock(), &mut stdout()),
             Some(input) => {
                 let f = File::open(input).expect("Error opening file.");
-                json_writer::gff2jsonl(f, &mut stdout(), gff_type)
+                json_writer::gff2jsonl(BufReader::new(f), &mut stdout())
             }
         },
         Brrrr::Gff2pq {
@@ -221,10 +216,10 @@ fn main() -> io::Result<()> {
             compression,
         } => parquet_writer::gff2pq(input_file_name, output_file_name, compression.into()),
         Brrrr::Fq2jsonl { input } => match input {
-            None => json_writer::fq2jsonl(stdin(), &mut stdout()),
+            None => json_writer::fq2jsonl(stdin().lock(), &mut stdout()),
             Some(input) => {
                 let f = File::open(input).expect("Error opening file.");
-                json_writer::fq2jsonl(f, &mut stdout())
+                json_writer::fq2jsonl(BufReader::new(f), &mut stdout())
             }
         },
     }

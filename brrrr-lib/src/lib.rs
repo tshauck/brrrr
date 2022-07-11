@@ -46,3 +46,5 @@ pub mod parquet_reader;
 
 /// Interface for the generic writer object.
 pub mod writer;
+
+pub mod types;

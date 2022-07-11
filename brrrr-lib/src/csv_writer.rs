@@ -2,16 +2,17 @@
 // All Rights Reserved
 /// The `csv_writer` module provides an implementation for the `RecordWriter` interface to read
 /// and write from csvs.
-use std::io::{ErrorKind, Read, Result, Write};
+use std::io::{BufRead, ErrorKind, Result, Write};
 
 use serde::ser::Serialize;
 
+use crate::types::{FastaRecord, FastqRecord};
 use crate::writer;
 
 use writer::RecordWriter;
 
-use bio::io::fasta;
-use bio::io::fastq;
+use noodles::fasta;
+use noodles::fastq;
 
 /// CsvRecordWriter holds a writer, and outputs FASTA records as newline delimited json.
 pub struct CsvRecordWriter<W: Write> {
@@ -40,13 +41,13 @@ impl<W: Write> writer::RecordWriter for CsvRecordWriter<W> {
 ///
 /// * `input` an input that implements the Read trait.
 /// * `output` an output that implements the Write trait.
-pub fn fa2csv<R: Read, W: Write>(input: R, output: &mut W) -> Result<()> {
-    let reader = fasta::Reader::new(input);
+pub fn fa2csv<R: BufRead, W: Write>(input: R, output: &mut W) -> Result<()> {
+    let mut reader = fasta::Reader::new(input);
     let record_writer = &mut CsvRecordWriter::new(output);
 
     for read_record in reader.records() {
         let record = read_record.expect("Error parsing record.");
-        let write_op = record_writer.write_serde_record(record);
+        let write_op = record_writer.write_serde_record(FastaRecord::from(record));
 
         if let Err(e) = write_op {
             match e.kind() {
@@ -62,15 +63,15 @@ pub fn fa2csv<R: Read, W: Write>(input: R, output: &mut W) -> Result<()> {
 ///
 /// # Arguments
 ///
-/// * `input` an input that implements the Read trait.
+/// * `input` an input that implements the BufRead trait.
 /// * `output` an output that implements the Write trait.
-pub fn fq2csv<R: Read, W: Write>(input: R, output: &mut W) -> Result<()> {
-    let reader = fastq::Reader::new(input);
+pub fn fq2csv<R: BufRead, W: Write>(input: R, output: &mut W) -> Result<()> {
+    let mut reader = fastq::Reader::new(input);
     let record_writer = &mut CsvRecordWriter::new(output);
 
     for read_record in reader.records() {
         let record = read_record.expect("Error parsing record.");
-        let write_op = record_writer.write_serde_record(record);
+        let write_op = record_writer.write_serde_record(FastqRecord::from(record));
 
         if let Err(e) = write_op {
             match e.kind() {

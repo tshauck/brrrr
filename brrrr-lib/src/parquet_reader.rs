@@ -1,8 +1,9 @@
 // (c) Copyright 2022 Trent Hauck
 // All Rights Reserved
 
-use bio::io::fasta;
-use bio::io::fastq;
+use noodles::fasta;
+use noodles::fastq;
+use parquet::data_type::AsBytes;
 use parquet::file::reader::SerializedFileReader;
 use parquet::record::RowAccessor;
 use std::io::{self, Result};
@@ -30,28 +31,26 @@ pub fn pq2fa<P: AsRef<Path>>(input: P, output: P) -> Result<()> {
 
             for (e, (key, _)) in row.get_column_iter().enumerate() {
                 match key.as_str() {
-                    "id" => id = Some(row.get_string(e).expect("unable to read id column")),
+                    "id" => id = Some(row.get_bytes(e).expect("unable to read id column")),
                     "sequence" => {
-                        sequence = Some(row.get_string(e).expect("uanble to read sequence column"))
+                        sequence = Some(row.get_bytes(e).expect("uanble to read sequence column"))
                     }
                     "description" => {
-                        description = Some(
-                            row.get_string(e)
-                                .expect("unable to read description column"),
-                        )
+                        description =
+                            Some(row.get_bytes(e).expect("unable to read description column"))
                     }
                     _ => continue,
                 }
             }
 
             match (id, description, sequence) {
-                (Some(i), Some(d), Some(s)) => {
-                    let r = fasta::Record::with_attrs(i, Some(d.as_str()), s.as_bytes());
-                    writer.write_record(&r)?;
-                }
-                (Some(i), None, Some(s)) => {
-                    let r = fasta::Record::with_attrs(i, None, s.as_bytes());
-                    writer.write_record(&r)?;
+                (Some(i), _, Some(s)) => {
+                    let definition =
+                        fasta::record::Definition::new(i.as_utf8().expect("error"), None);
+
+                    let sequence = fasta::record::Sequence::from(s.as_bytes().to_vec());
+                    let record = fasta::Record::new(definition, sequence);
+                    writer.write_record(&record)?
                 }
                 (_, _, _) => {
                     panic!("unable to handle values passed in id, description, or sequence")
@@ -85,12 +84,12 @@ pub fn pq2fq<P: AsRef<Path>>(input: P, output: P) -> Result<()> {
 
             for (e, (key, _)) in row.get_column_iter().enumerate() {
                 match key.as_str() {
-                    "id" => id = Some(row.get_string(e).expect("unable to read id column")),
+                    "id" => id = Some(row.get_bytes(e).expect("unable to read id column")),
                     "sequence" => {
-                        sequence = Some(row.get_string(e).expect("uanble to read sequence column"))
+                        sequence = Some(row.get_bytes(e).expect("unable to read sequence column"))
                     }
                     "quality" => {
-                        quality = Some(row.get_string(e).expect("uanble to read quality column"))
+                        quality = Some(row.get_bytes(e).expect("unable to read quality column"))
                     }
                     "description" => {
                         description = Some(
@@ -103,14 +102,9 @@ pub fn pq2fq<P: AsRef<Path>>(input: P, output: P) -> Result<()> {
             }
 
             match (id, description, sequence, quality) {
-                (Some(i), Some(d), Some(s), Some(q)) => {
-                    let r =
-                        fastq::Record::with_attrs(i, Some(d.as_str()), s.as_bytes(), q.as_bytes());
-                    writer.write_record(&r)?;
-                }
-                (Some(i), None, Some(s), Some(q)) => {
-                    let r = fastq::Record::with_attrs(i, None, s.as_bytes(), q.as_bytes());
-                    writer.write_record(&r)?;
+                (Some(i), _, Some(s), Some(q)) => {
+                    let record = fastq::Record::new(i.as_bytes(), s.as_bytes(), q.as_bytes());
+                    writer.write_record(&record)?;
                 }
                 (_, _, _, _) => {
                     panic!(
