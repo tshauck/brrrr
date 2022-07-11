@@ -255,8 +255,8 @@ fn write_records_to_file<P: AsRef<Path>, R: BufRead>(
 /// * `parquet_compression` The parquet compression to use.
 /// * `bio_file_compression` The compression for the input bio file.
 pub fn fa2pq<P: AsRef<Path>>(
-    input: P,
-    output: P,
+    input: &P,
+    output: &P,
     parquet_compression: Compression,
     bio_file_compression: BioFileCompression,
 ) -> Result<()> {

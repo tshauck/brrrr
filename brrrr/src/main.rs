@@ -164,8 +164,8 @@ fn main() -> io::Result<()> {
             output_compression,
             input_compression,
         } => parquet_writer::fa2pq(
-            input_file_name,
-            output_file_name,
+            &input_file_name,
+            &output_file_name,
             output_compression.into(),
             input_compression.into(),
         ),
