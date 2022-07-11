@@ -47,7 +47,7 @@ pub fn gff2pq<P: AsRef<Path>>(input: P, output: P, parquet_compression: Compress
         Field::new("end", DataType::Int64, false),
         Field::new("score", DataType::Int64, false),
         Field::new("strand", DataType::Utf8, false),
-        Field::new("frame", DataType::Utf8, false),
+        Field::new("frame", DataType::Utf8, true),
         Field::new(
             "attributes",
             DataType::Map(
@@ -85,8 +85,8 @@ pub fn gff2pq<P: AsRef<Path>>(input: P, output: P, parquet_compression: Compress
         let mut strand_builder = StringBuilder::new(2048);
         let mut frame_builder = StringBuilder::new(2048);
 
-        let key_builder = StringBuilder::new(20);
-        let value_builder = StringBuilder::new(20);
+        let key_builder = StringBuilder::new(2048);
+        let value_builder = StringBuilder::new(2048);
         let mut att_builder = MapBuilder::new(None, key_builder, value_builder);
 
         for chunk_i in chunk {
@@ -135,17 +135,17 @@ pub fn gff2pq<P: AsRef<Path>>(input: P, output: P, parquet_compression: Compress
                 None => frame_builder.append_null().expect("error"),
             }
 
-            //let record_key_builder = att_builder.keys();
-            //for k in record.attributes().keys() {
-            //record_key_builder.append_value(k).unwrap();
-            //}
+            let record_key_builder = att_builder.keys();
+            for k in gff_type.attributes.keys() {
+                record_key_builder.append_value(k).unwrap();
+            }
 
-            //let record_value_builder = att_builder.values();
-            //for (_, v) in record.attributes().iter() {
-            //record_value_builder.append_value(v).unwrap();
-            //}
+            let record_value_builder = att_builder.values();
+            for v in gff_type.attributes.values() {
+                record_value_builder.append_value(v).unwrap();
+            }
 
-            //att_builder.append(true).unwrap();
+            att_builder.append(true).unwrap();
         }
 
         let seqname_array = seqname_builder.finish();
@@ -156,7 +156,6 @@ pub fn gff2pq<P: AsRef<Path>>(input: P, output: P, parquet_compression: Compress
         let score_array = score_builder.finish();
         let strand_array = strand_builder.finish();
         let frame_array = frame_builder.finish();
-
         let att_array = att_builder.finish();
 
         let rb = RecordBatch::try_new(
@@ -197,15 +196,16 @@ fn write_records_to_file<P: AsRef<Path>, R: BufRead>(
     let props = WriterProperties::builder()
         .set_compression(parquet_compression)
         .set_statistics_enabled(true);
+
     let file = fs::File::create(output).unwrap();
     let mut writer =
         ArrowWriter::try_new(file, Arc::new(file_schema.clone()), Some(props.build())).unwrap();
 
     let chunk_size = 2usize.pow(20);
     for chunk in reader.records().into_iter().chunks(chunk_size).into_iter() {
-        let mut id_builder = StringBuilder::new(2048);
+        let mut id_builder = Vec::with_capacity(chunk_size);
         let mut description_builder = StringBuilder::new(2048);
-        let mut seq_builder = StringBuilder::new(2048);
+        let mut seq_builder = Vec::with_capacity(chunk_size);
 
         for chunk_i in chunk {
             let record = match chunk_i {
@@ -213,10 +213,7 @@ fn write_records_to_file<P: AsRef<Path>, R: BufRead>(
                 Err(error) => panic!("{}", error),
             };
 
-            id_builder
-                .append_value(record.id)
-                .expect("Couldn't append id.");
-
+            id_builder.push(record.id);
             match record.desc {
                 Some(x) => description_builder
                     .append_value(x)
@@ -225,15 +222,12 @@ fn write_records_to_file<P: AsRef<Path>, R: BufRead>(
                     .append_null()
                     .expect("Couldn't append null description."),
             }
-
-            seq_builder
-                .append_value(record.seq)
-                .expect("Couldn't add sequence.");
+            seq_builder.push(record.seq);
         }
 
-        let id_array = id_builder.finish();
+        let id_array = StringArray::from(id_builder);
         let desc_array = description_builder.finish();
-        let seq_array = seq_builder.finish();
+        let seq_array = StringArray::from(seq_builder);
 
         let rb = RecordBatch::try_new(
             Arc::new(file_schema.clone()),
