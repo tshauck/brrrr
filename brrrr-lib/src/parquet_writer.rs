@@ -10,7 +10,7 @@ use std::sync::Arc;
 
 use flate2::bufread::GzDecoder;
 use itertools::Itertools;
-use noodles::fasta as nfasta;
+use noodles::fasta;
 use noodles::fastq;
 use noodles::gff;
 
@@ -184,7 +184,7 @@ pub fn gff2pq<P: AsRef<Path>>(input: P, output: P, parquet_compression: Compress
 }
 
 fn write_records_to_file<P: AsRef<Path>, R: BufRead>(
-    mut reader: nfasta::Reader<R>,
+    mut reader: fasta::Reader<R>,
     output: P,
     parquet_compression: Compression,
 ) -> Result<()> {
@@ -264,12 +264,12 @@ pub fn fa2pq<P: AsRef<Path>>(
         BioFileCompression::GZIP => {
             let file = fs::File::open(input).expect("error");
             let gz = GzDecoder::new(BufReader::new(file));
-            let reader = nfasta::Reader::new(BufReader::new(gz));
+            let reader = fasta::Reader::new(BufReader::new(gz));
             write_records_to_file(reader, output, parquet_compression)
         }
         BioFileCompression::UNCOMPRESSED => {
             let file = fs::File::open(input).expect("error");
-            let reader = nfasta::Reader::new(BufReader::new(file));
+            let reader = fasta::Reader::new(BufReader::new(file));
             write_records_to_file(reader, output, parquet_compression)
         }
     }
