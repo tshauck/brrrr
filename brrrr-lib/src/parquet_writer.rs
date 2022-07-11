@@ -23,6 +23,7 @@ use parquet::file::properties::WriterProperties;
 
 use crate::types::{FastaRecord, FastqRecord, GffRecord};
 
+#[derive(Debug, Copy, Clone)]
 pub enum BioFileCompression {
     UNCOMPRESSED,
     GZIP,

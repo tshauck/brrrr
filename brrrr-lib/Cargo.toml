@@ -19,7 +19,7 @@ noodles = {version = "0.25.0", features = ["fastq", "fasta", "bgzf", "gff"]}
 flate2 = "*"
 
 [dev-dependencies]
-criterion = "0.3"
+criterion = {version="0.3", features = ["html_reports"]}
 
 [[bench]]
 harness = false
