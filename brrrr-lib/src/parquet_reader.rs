@@ -3,7 +3,6 @@
 
 use noodles::fasta;
 use noodles::fastq;
-use parquet::data_type::AsBytes;
 use parquet::file::reader::SerializedFileReader;
 use parquet::record::RowAccessor;
 use std::io::{self, Result};
@@ -85,18 +84,18 @@ pub fn pq2fq<P: AsRef<Path>>(input: P, output: P) -> Result<()> {
 
             for (e, (key, _)) in row.get_column_iter().enumerate() {
                 match key.as_str() {
-                    "id" => id = Some(row.get_bytes(e).expect("unable to read id column")),
+                    "id" => id = Some(row.get_string(e).expect("unable to read id column")),
                     "sequence" => {
-                        sequence = Some(row.get_bytes(e).expect("unable to read sequence column"))
+                        sequence = Some(row.get_string(e).expect("unable to read sequence column"))
                     }
                     "quality" => {
-                        quality = Some(row.get_bytes(e).expect("unable to read quality column"))
+                        quality = Some(row.get_string(e).expect("unable to read quality column"))
                     }
                     "description" => {
-                        description = Some(
-                            row.get_string(e)
-                                .expect("unable to read description column"),
-                        )
+                        description = match row.get_string(e) {
+                            Ok(v) => Some(v.to_string()),
+                            Err(_) => None,
+                        };
                     }
                     _ => continue,
                 }
@@ -123,25 +122,59 @@ mod tests {
     use std::{env, io::BufReader};
 
     use itertools::Itertools;
-    use noodles::fasta::{record::Definition, record::Sequence, Reader, Record, Writer};
+    use noodles::fasta::{self, record::Definition, record::Sequence};
+    use noodles::fastq;
     use parquet::basic::Compression;
 
     use super::*;
-    use crate::parquet_writer::{fa2pq, BioFileCompression};
+    use crate::parquet_writer::{fa2pq, fq2pq, BioFileCompression};
 
     #[test]
-    fn pq2fa_base_test() {
+    fn parquet_fastq_base_test() {
+        let temp_dir = env::temp_dir();
+        let initital_fasta = temp_dir.join("initital_fasta.fastq");
+        let initial_parquet = temp_dir.join("initial_fq_parquet.parquet");
+        let second_fasta = temp_dir.join("second_fasta.fastq");
+
+        let r = fastq::Record::new("r0", "AGCT", "NDLS");
+
+        let mut writer = fastq::Writer::new(File::create(&initital_fasta).expect("error"));
+        writer.write_record(&r).expect("error");
+
+        fq2pq(&initital_fasta, &initial_parquet, Compression::UNCOMPRESSED).expect("fa2pq failed");
+        assert!(&initial_parquet.exists());
+        pq2fq(&initial_parquet, &second_fasta).expect("fa2pq failed");
+
+        let mut reader =
+            fastq::Reader::new(BufReader::new(File::open(&second_fasta).expect("error")));
+
+        let recs = reader.records().collect_vec();
+        assert_eq!(recs.len(), 1);
+
+        let actual_record = recs.get(0);
+        if let Some(ar) = actual_record {
+            assert!(ar.is_ok());
+
+            match ar {
+                Ok(a) => assert_eq!(a.name(), r.name()),
+                Err(e) => assert_eq!(e.kind(), io::ErrorKind::InvalidData),
+            };
+        }
+    }
+
+    #[test]
+    fn parquet_fasta_base_test() {
         let temp_dir = env::temp_dir();
         let initital_fasta = temp_dir.join("initital_fasta.fasta");
         let initial_parquet = temp_dir.join("initial_parquet.parquet");
         let second_fasta = temp_dir.join("second_fasta.fasta");
 
-        let r = Record::new(
+        let r = fasta::Record::new(
             Definition::new("name", Some("description".to_string())),
             Sequence::from(b"ATCG".to_vec()),
         );
 
-        let mut writer = Writer::new(File::create(&initital_fasta).expect("error"));
+        let mut writer = fasta::Writer::new(File::create(&initital_fasta).expect("error"));
         writer.write_record(&r).expect("error");
 
         fa2pq(
@@ -153,10 +186,10 @@ mod tests {
         .expect("fa2pq failed");
 
         assert!(&initial_parquet.exists());
-
         pq2fa(&initial_parquet, &second_fasta).expect("fa2pq failed");
 
-        let mut reader = Reader::new(BufReader::new(File::open(&second_fasta).expect("error")));
+        let mut reader =
+            fasta::Reader::new(BufReader::new(File::open(&second_fasta).expect("error")));
 
         let recs = reader.records().collect_vec();
         assert_eq!(recs.len(), 1);
