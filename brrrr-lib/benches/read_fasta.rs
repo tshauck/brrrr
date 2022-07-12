@@ -65,8 +65,8 @@ fn bench_fasta_parquet_output(c: &mut Criterion) {
                     );
 
                     let _ = brrrr_lib::parquet_writer::fa2pq(
-                        filename,
-                        out_file,
+                        &filename,
+                        &out_file,
                         pq_compression,
                         f_compression,
                     );
