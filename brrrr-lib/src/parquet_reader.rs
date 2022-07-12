@@ -37,7 +37,7 @@ pub fn pq2fa<P: AsRef<Path>>(input: P, output: P) -> Result<()> {
                     }
                     "description" => {
                         description = match row.get_string(e) {
-                            Ok(v) => Some(v),
+                            Ok(v) => Some(v.to_string()),
                             Err(_) => None,
                         };
                     }
@@ -46,8 +46,8 @@ pub fn pq2fa<P: AsRef<Path>>(input: P, output: P) -> Result<()> {
             }
 
             match (id, description, sequence) {
-                (Some(i), _, Some(s)) => {
-                    let definition = fasta::record::Definition::new(i, None);
+                (Some(i), d, Some(s)) => {
+                    let definition = fasta::record::Definition::new(i, d);
 
                     let sequence = fasta::record::Sequence::from(s.as_bytes().to_vec());
                     let record = fasta::Record::new(definition, sequence);
@@ -137,7 +137,7 @@ mod tests {
         let second_fasta = temp_dir.join("second_fasta.fasta");
 
         let r = Record::new(
-            Definition::new("name", None),
+            Definition::new("name", Some("description".to_string())),
             Sequence::from(b"ATCG".to_vec()),
         );
 
