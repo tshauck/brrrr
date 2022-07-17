@@ -91,10 +91,7 @@ pub fn gff2pq<P: AsRef<Path>>(input: P, output: P, parquet_compression: Compress
         let mut att_builder = MapBuilder::new(None, key_builder, value_builder);
 
         for chunk_i in chunk {
-            let record = match chunk_i {
-                Ok(r) => r,
-                Err(error) => panic!("{}", error),
-            };
+            let record = chunk_i?;
 
             let gff_type = GffRecord::from(record);
 

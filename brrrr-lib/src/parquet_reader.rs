@@ -1,8 +1,14 @@
 // (c) Copyright 2022 Trent Hauck
 // All Rights Reserved
 
+use noodles::core;
 use noodles::fasta;
 use noodles::fastq;
+use noodles::gff;
+use noodles::gff::record::attributes::Entry;
+use noodles::gff::record::Attributes;
+use noodles::gff::record::Phase;
+use noodles::gff::record::Strand;
 use parquet::file::reader::SerializedFileReader;
 use parquet::record::RowAccessor;
 use std::io::{self, Result};
@@ -117,6 +123,96 @@ pub fn pq2fq<P: AsRef<Path>>(input: P, output: P) -> Result<()> {
     Ok(())
 }
 
+/// pq2gff reads an input parquet file and convers it to GFF.
+///
+/// # Arguments
+///
+/// * `input` - The path to the input Parquet file.
+/// * `output` - The path to the output GFF file.
+
+pub fn pq2gff<P: AsRef<Path>>(input: P, output: P) -> Result<()> {
+    let output_file = File::create(output).unwrap();
+    let handle = io::BufWriter::new(output_file);
+    let mut writer = gff::Writer::new(handle);
+
+    if let Ok(file) = File::open(&input) {
+        let reader = SerializedFileReader::new(file).unwrap();
+
+        for row in reader.into_iter() {
+            let mut gff_record_builder = gff::Record::builder();
+
+            for (e, (key, _)) in row.get_column_iter().enumerate() {
+                match key.as_str() {
+                    "seqname" => {
+                        gff_record_builder = gff_record_builder
+                            .set_reference_sequence_name(row.get_string(e)?.to_string())
+                    }
+                    "source" => {
+                        gff_record_builder =
+                            gff_record_builder.set_source(row.get_string(e)?.to_string())
+                    }
+                    "feature_type" => {
+                        gff_record_builder =
+                            gff_record_builder.set_type(row.get_string(e)?.to_string())
+                    }
+                    "start" => {
+                        let int_position = row.get_long(e)?;
+                        let position = core::Position::new(int_position as usize).unwrap();
+                        gff_record_builder = gff_record_builder.set_start(position);
+                    }
+                    "end" => {
+                        let int_position = row.get_long(e)?;
+                        let position = core::Position::new(int_position as usize).unwrap();
+                        gff_record_builder = gff_record_builder.set_end(position);
+                    }
+                    "score" => {
+                        let score = row.get_long(e)?;
+                        gff_record_builder = gff_record_builder.set_score(score as f32);
+                    }
+                    "stand" => {
+                        let strand = row.get_string(e)?;
+                        let n_strand = strand.parse::<Strand>().expect("Bad strand");
+                        gff_record_builder = gff_record_builder.set_strand(n_strand);
+                    }
+                    "frame" => {
+                        let frame = row.get_string(e);
+                        match frame {
+                            Ok(f) => {
+                                let phase = f.parse::<Phase>().expect("Bad phase");
+                                gff_record_builder = gff_record_builder.set_phase(phase);
+                            }
+                            _ => continue,
+                        }
+                    }
+                    "attributes" => {
+                        let parquet_map = row.get_map(e)?;
+                        println!("{:?}", parquet_map);
+
+                        let entries: Vec<Entry> = parquet_map
+                            .entries()
+                            .iter()
+                            .map(|entry| {
+                                let (key, value) = &entry;
+
+                                // TODO(trent): why is does this need trim_matches?
+                                Entry::new(key.to_string().trim_matches('"'), value.to_string().trim_matches('"'))
+                            })
+                            .collect();
+
+                        let attributes = Attributes::from(entries);
+                        gff_record_builder = gff_record_builder.set_attributes(attributes);
+                    }
+                    _ => continue,
+                }
+            }
+
+            writer.write_record(&gff_record_builder.build())?;
+        }
+    }
+
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use std::{env, io::BufReader};
@@ -127,14 +223,55 @@ mod tests {
     use parquet::basic::Compression;
 
     use super::*;
-    use crate::parquet_writer::{fa2pq, fq2pq, BioFileCompression};
+    use crate::parquet_writer::{fa2pq, fq2pq, gff2pq, BioFileCompression};
+
+    #[test]
+    fn parquet_gff_base_test() {
+        //let temp_dir = env::temp_dir();
+        let temp_dir = env::current_dir().expect("ok");
+        let initital_gff = temp_dir.join("initital_gff.gff");
+        let initial_parquet = temp_dir.join("initial_gff_parquet.parquet");
+        let second_gff = temp_dir.join("second_gff.gff");
+
+        let s = "sq0\tNOODLES\tgene\t8\t13\t.\t+\t.\tgene_id=ndls0;gene_name=gene0";
+        let gff_record = s.parse::<gff::Record>().expect("parse error");
+
+        let mut writer = gff::Writer::new(File::create(&initital_gff).expect("error"));
+        writer.write_record(&gff_record).expect("error");
+
+        gff2pq(&initital_gff, &initial_parquet, Compression::UNCOMPRESSED).expect("gff2pq failed");
+        assert!(&initial_parquet.exists());
+        pq2gff(&initial_parquet, &second_gff).expect("pq2gff failed");
+
+        let mut reader = gff::Reader::new(BufReader::new(File::open(&second_gff).expect("error")));
+        let recs = reader.records().collect_vec();
+        assert_eq!(recs.len(), 1);
+
+        let actual_record = recs.get(0);
+        if let Some(ar) = actual_record {
+            assert!(ar.is_ok());
+
+            match ar {
+                Ok(found_gff_record) => {
+                    assert_eq!(
+                        found_gff_record.reference_sequence_name(),
+                        gff_record.reference_sequence_name()
+                    );
+                    let mut found_keys: Vec<&str> = found_gff_record.attributes().into_iter().map(|e| e.key()).collect();
+                    let mut gff_keys: Vec<&str> = gff_record.attributes().into_iter().map(|e| e.key()).collect();
+                    assert_eq!(found_keys.sort(), gff_keys.sort());
+                }
+                _ => panic!("could not match gff"),
+            }
+        }
+    }
 
     #[test]
     fn parquet_fastq_base_test() {
         let temp_dir = env::temp_dir();
         let initital_fasta = temp_dir.join("initital_fasta.fastq");
         let initial_parquet = temp_dir.join("initial_fq_parquet.parquet");
-        let second_fasta = temp_dir.join("second_fasta.fastq");
+        let second_fasta = temp_dir.join("second_fastq.fastq");
 
         let r = fastq::Record::new("r0", "AGCT", "NDLS");
 
@@ -154,11 +291,6 @@ mod tests {
         let actual_record = recs.get(0);
         if let Some(ar) = actual_record {
             assert!(ar.is_ok());
-
-            match ar {
-                Ok(a) => assert_eq!(a.name(), r.name()),
-                Err(e) => assert_eq!(e.kind(), io::ErrorKind::InvalidData),
-            };
         }
     }
 
