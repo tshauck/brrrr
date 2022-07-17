@@ -227,8 +227,7 @@ mod tests {
 
     #[test]
     fn parquet_gff_base_test() {
-        //let temp_dir = env::temp_dir();
-        let temp_dir = env::current_dir().expect("ok");
+        let temp_dir = env::temp_dir();
         let initital_gff = temp_dir.join("initital_gff.gff");
         let initial_parquet = temp_dir.join("initial_gff_parquet.parquet");
         let second_gff = temp_dir.join("second_gff.gff");
