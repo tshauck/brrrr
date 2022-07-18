@@ -46,7 +46,7 @@ pub fn gff2pq<P: AsRef<Path>>(input: P, output: P, parquet_compression: Compress
         Field::new("feature_type", DataType::Utf8, false),
         Field::new("start", DataType::Int64, false),
         Field::new("end", DataType::Int64, false),
-        Field::new("score", DataType::Int64, false),
+        Field::new("score", DataType::Int64, true),
         Field::new("strand", DataType::Utf8, false),
         Field::new("frame", DataType::Utf8, true),
         Field::new(
@@ -112,13 +112,13 @@ pub fn gff2pq<P: AsRef<Path>>(input: P, output: P, parquet_compression: Compress
                 .expect("Couldn't append seqname_builder.");
 
             end_builder
-                .append_value(gff_type.start as i64)
+                .append_value(gff_type.end as i64)
                 .expect("Couldn't append seqname_builder.");
 
             match gff_type.score {
                 Some(score) => score_builder
                     .append_value(score as i64)
-                    .expect("Couldn't append seqname_builder."),
+                    .expect("Couldn't append score builder."),
                 None => score_builder.append_null().expect("error"),
             }
 

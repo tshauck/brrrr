@@ -165,10 +165,12 @@ pub fn pq2gff<P: AsRef<Path>>(input: P, output: P) -> Result<()> {
                         let position = core::Position::new(int_position as usize).unwrap();
                         gff_record_builder = gff_record_builder.set_end(position);
                     }
-                    "score" => {
-                        let score = row.get_long(e)?;
-                        gff_record_builder = gff_record_builder.set_score(score as f32);
-                    }
+                    "score" => match row.get_long(e) {
+                        Ok(score) => {
+                            gff_record_builder = gff_record_builder.set_score(score as f32);
+                        }
+                        _ => continue,
+                    },
                     "stand" => {
                         let strand = row.get_string(e)?;
                         let n_strand = strand.parse::<Strand>().expect("Bad strand");
@@ -186,8 +188,6 @@ pub fn pq2gff<P: AsRef<Path>>(input: P, output: P) -> Result<()> {
                     }
                     "attributes" => {
                         let parquet_map = row.get_map(e)?;
-                        println!("{:?}", parquet_map);
-
                         let entries: Vec<Entry> = parquet_map
                             .entries()
                             .iter()
@@ -195,7 +195,10 @@ pub fn pq2gff<P: AsRef<Path>>(input: P, output: P) -> Result<()> {
                                 let (key, value) = &entry;
 
                                 // TODO(trent): why is does this need trim_matches?
-                                Entry::new(key.to_string().trim_matches('"'), value.to_string().trim_matches('"'))
+                                Entry::new(
+                                    key.to_string().trim_matches('"'),
+                                    value.to_string().trim_matches('"'),
+                                )
                             })
                             .collect();
 
@@ -256,9 +259,25 @@ mod tests {
                         found_gff_record.reference_sequence_name(),
                         gff_record.reference_sequence_name()
                     );
-                    let mut found_keys: Vec<&str> = found_gff_record.attributes().into_iter().map(|e| e.key()).collect();
-                    let mut gff_keys: Vec<&str> = gff_record.attributes().into_iter().map(|e| e.key()).collect();
+
+                    let mut found_keys: Vec<&str> = found_gff_record
+                        .attributes()
+                        .into_iter()
+                        .map(|e| e.key())
+                        .collect();
+                    let mut gff_keys: Vec<&str> = gff_record
+                        .attributes()
+                        .into_iter()
+                        .map(|e| e.key())
+                        .collect();
                     assert_eq!(found_keys.sort(), gff_keys.sort());
+
+                    assert_eq!(found_gff_record.source(), gff_record.source());
+                    assert_eq!(found_gff_record.ty(), gff_record.ty());
+                    assert_eq!(found_gff_record.start(), gff_record.start());
+                    assert_eq!(found_gff_record.end(), gff_record.end());
+                    assert_eq!(found_gff_record.score(), gff_record.score());
+                    assert_eq!(found_gff_record.phase(), gff_record.phase());
                 }
                 _ => panic!("could not match gff"),
             }
