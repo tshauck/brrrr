@@ -1,0 +1,8 @@
+version: '3'
+
+services:
+  brrrr:
+    build:
+      context: .
+    image: brrrr
+
