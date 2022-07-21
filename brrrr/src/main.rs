@@ -2,12 +2,13 @@
 // All Rights Reserved
 
 use std::fs::File;
-use std::io::{self, stdin, stdout, BufReader};
+use std::io::{stdin, stdout, BufReader};
 use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
 
 use brrrr_lib::csv_writer;
+use brrrr_lib::errors::BrrrrError;
 use brrrr_lib::json_writer;
 use brrrr_lib::parquet_reader;
 use brrrr_lib::parquet_writer;
@@ -154,7 +155,7 @@ enum Brrrr {
     },
 }
 
-fn main() -> io::Result<()> {
+fn main() -> Result<(), BrrrrError> {
     let args = Cli::parse();
 
     match args.command {
@@ -185,28 +186,28 @@ fn main() -> io::Result<()> {
         Brrrr::Fa2csv { input } => match input {
             None => csv_writer::fa2csv(stdin().lock(), &mut stdout()),
             Some(input) => {
-                let f = File::open(input).expect("Error opening file.");
+                let f = File::open(input)?;
                 csv_writer::fa2csv(BufReader::new(f), &mut stdout())
             }
         },
         Brrrr::Fq2csv { input } => match input {
             None => csv_writer::fq2csv(stdin().lock(), &mut stdout()),
             Some(input) => {
-                let f = File::open(input).expect("Error opening file.");
+                let f = File::open(input)?;
                 csv_writer::fq2csv(BufReader::new(f), &mut stdout())
             }
         },
         Brrrr::Fa2jsonl { input } => match input {
             None => json_writer::fa2jsonl(stdin().lock(), &mut stdout()),
             Some(input) => {
-                let f = File::open(input).expect("Error opening file.");
+                let f = File::open(input)?;
                 json_writer::fa2jsonl(BufReader::new(f), &mut stdout())
             }
         },
         Brrrr::Gff2jsonl { input } => match input {
             None => json_writer::gff2jsonl(stdin().lock(), &mut stdout()),
             Some(input) => {
-                let f = File::open(input).expect("Error opening file.");
+                let f = File::open(input)?;
                 json_writer::gff2jsonl(BufReader::new(f), &mut stdout())
             }
         },
@@ -218,7 +219,7 @@ fn main() -> io::Result<()> {
         Brrrr::Fq2jsonl { input } => match input {
             None => json_writer::fq2jsonl(stdin().lock(), &mut stdout()),
             Some(input) => {
-                let f = File::open(input).expect("Error opening file.");
+                let f = File::open(input)?;
                 json_writer::fq2jsonl(BufReader::new(f), &mut stdout())
             }
         },

@@ -47,4 +47,8 @@ pub mod parquet_reader;
 /// Interface for the generic writer object.
 pub mod writer;
 
+/// Types used within the library.
 pub mod types;
+
+/// Custom brrrr errors.
+pub mod errors;

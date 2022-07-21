@@ -11,8 +11,10 @@ use noodles::gff::record::Phase;
 use noodles::gff::record::Strand;
 use parquet::file::reader::SerializedFileReader;
 use parquet::record::RowAccessor;
-use std::io::{self, Result};
+use std::io;
 use std::{fs::File, path::Path};
+
+use crate::errors::BrrrrError;
 
 /// pq2fa reads an input parquet file, and converts the "id", "sequence", and "description" columns
 /// into a FASTA file with the format: ">{id} {description}\n{sequence}".
@@ -21,7 +23,7 @@ use std::{fs::File, path::Path};
 ///
 /// * `input` - The path to the input Parquet file.
 /// * `output` - The path to the output FASTA file.
-pub fn pq2fa<P: AsRef<Path>>(input: P, output: P) -> Result<()> {
+pub fn pq2fa<P: AsRef<Path>>(input: P, output: P) -> Result<(), BrrrrError> {
     let output_file = File::create(output).unwrap();
     let handle = io::BufWriter::new(output_file);
     let mut writer = fasta::Writer::new(handle);
@@ -36,10 +38,8 @@ pub fn pq2fa<P: AsRef<Path>>(input: P, output: P) -> Result<()> {
 
             for (e, (key, _)) in row.get_column_iter().enumerate() {
                 match key.as_str() {
-                    "id" => id = Some(row.get_string(e).expect("unable to read id column")),
-                    "sequence" => {
-                        sequence = Some(row.get_string(e).expect("uanble to read sequence column"))
-                    }
+                    "id" => id = Some(row.get_string(e)?),
+                    "sequence" => sequence = Some(row.get_string(e)?),
                     "description" => {
                         description = match row.get_string(e) {
                             Ok(v) => Some(v.to_string()),
@@ -74,7 +74,7 @@ pub fn pq2fa<P: AsRef<Path>>(input: P, output: P) -> Result<()> {
 ///
 /// * `input` - The path to the input Parquet file.
 /// * `output` - The path to the output FASTQ file.
-pub fn pq2fq<P: AsRef<Path>>(input: P, output: P) -> Result<()> {
+pub fn pq2fq<P: AsRef<Path>>(input: P, output: P) -> Result<(), BrrrrError> {
     let output_file = File::create(output).unwrap();
     let handle = io::BufWriter::new(output_file);
     let mut writer = fastq::Writer::new(handle);
@@ -90,13 +90,9 @@ pub fn pq2fq<P: AsRef<Path>>(input: P, output: P) -> Result<()> {
 
             for (e, (key, _)) in row.get_column_iter().enumerate() {
                 match key.as_str() {
-                    "id" => id = Some(row.get_string(e).expect("unable to read id column")),
-                    "sequence" => {
-                        sequence = Some(row.get_string(e).expect("unable to read sequence column"))
-                    }
-                    "quality" => {
-                        quality = Some(row.get_string(e).expect("unable to read quality column"))
-                    }
+                    "id" => id = Some(row.get_string(e)?),
+                    "sequence" => sequence = Some(row.get_string(e)?),
+                    "quality" => quality = Some(row.get_string(e)?),
                     "description" => {
                         description = match row.get_string(e) {
                             Ok(v) => Some(v.to_string()),
@@ -130,7 +126,7 @@ pub fn pq2fq<P: AsRef<Path>>(input: P, output: P) -> Result<()> {
 /// * `input` - The path to the input Parquet file.
 /// * `output` - The path to the output GFF file.
 
-pub fn pq2gff<P: AsRef<Path>>(input: P, output: P) -> Result<()> {
+pub fn pq2gff<P: AsRef<Path>>(input: P, output: P) -> Result<(), BrrrrError> {
     let output_file = File::create(output).unwrap();
     let handle = io::BufWriter::new(output_file);
     let mut writer = gff::Writer::new(handle);
@@ -173,14 +169,14 @@ pub fn pq2gff<P: AsRef<Path>>(input: P, output: P) -> Result<()> {
                     },
                     "stand" => {
                         let strand = row.get_string(e)?;
-                        let n_strand = strand.parse::<Strand>().expect("Bad strand");
+                        let n_strand = strand.parse::<Strand>().expect("unable to parse strand");
                         gff_record_builder = gff_record_builder.set_strand(n_strand);
                     }
                     "frame" => {
                         let frame = row.get_string(e);
                         match frame {
                             Ok(f) => {
-                                let phase = f.parse::<Phase>().expect("Bad phase");
+                                let phase = f.parse::<Phase>().expect("unable to parse phase");
                                 gff_record_builder = gff_record_builder.set_phase(phase);
                             }
                             _ => continue,

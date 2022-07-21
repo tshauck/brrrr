@@ -4,8 +4,8 @@
 use std::fs;
 use std::io::BufRead;
 use std::io::BufReader;
-use std::io::Result;
 use std::path::Path;
+use std::result::Result;
 use std::sync::Arc;
 
 use flate2::bufread::GzDecoder;
@@ -21,6 +21,7 @@ use parquet::arrow::arrow_writer::ArrowWriter;
 use parquet::basic::Compression;
 use parquet::file::properties::WriterProperties;
 
+use crate::errors::BrrrrError;
 use crate::types::{FastaRecord, FastqRecord, GffRecord};
 
 #[derive(Debug, Copy, Clone)]
@@ -35,7 +36,11 @@ pub enum BioFileCompression {
 /// * `input` The path to the input GFF file.
 /// * `output` The path to the output parquet file.
 /// * `parquet_compression` The parquet compression to use.
-pub fn gff2pq<P: AsRef<Path>>(input: P, output: P, parquet_compression: Compression) -> Result<()> {
+pub fn gff2pq<P: AsRef<Path>>(
+    input: P,
+    output: P,
+    parquet_compression: Compression,
+) -> Result<(), BrrrrError> {
     let props = WriterProperties::builder()
         .set_compression(parquet_compression)
         .set_statistics_enabled(true);
@@ -66,7 +71,7 @@ pub fn gff2pq<P: AsRef<Path>>(input: P, output: P, parquet_compression: Compress
         ),
     ]);
 
-    let input_file = fs::File::open(input).expect("Error opening file.");
+    let input_file = fs::File::open(input)?;
     let mut reader = gff::Reader::new(BufReader::new(input_file));
 
     let records = reader.records();
@@ -95,42 +100,22 @@ pub fn gff2pq<P: AsRef<Path>>(input: P, output: P, parquet_compression: Compress
 
             let gff_type = GffRecord::from(record);
 
-            seqname_builder
-                .append_value(gff_type.seqname)
-                .expect("Couldn't append seqname_builder.");
-
-            source_builder
-                .append_value(gff_type.source)
-                .expect("Couldn't append seqname_builder.");
-
-            feature_type_builder
-                .append_value(gff_type.feature_type)
-                .expect("Couldn't append seqname_builder.");
-
-            start_builder
-                .append_value(gff_type.start as i64)
-                .expect("Couldn't append seqname_builder.");
-
-            end_builder
-                .append_value(gff_type.end as i64)
-                .expect("Couldn't append seqname_builder.");
+            seqname_builder.append_value(gff_type.seqname)?;
+            source_builder.append_value(gff_type.source)?;
+            feature_type_builder.append_value(gff_type.feature_type)?;
+            start_builder.append_value(gff_type.start as i64)?;
+            end_builder.append_value(gff_type.end as i64)?;
 
             match gff_type.score {
-                Some(score) => score_builder
-                    .append_value(score as i64)
-                    .expect("Couldn't append score builder."),
-                None => score_builder.append_null().expect("error"),
+                Some(score) => score_builder.append_value(score as i64)?,
+                None => score_builder.append_null()?,
             }
 
-            strand_builder
-                .append_value(gff_type.strand)
-                .expect("Couldn't append strand.");
+            strand_builder.append_value(gff_type.strand)?;
 
             match gff_type.frame {
-                Some(frame) => frame_builder
-                    .append_value(frame)
-                    .expect("Couldn't append seqname_builder."),
-                None => frame_builder.append_null().expect("error"),
+                Some(frame) => frame_builder.append_value(frame)?,
+                None => frame_builder.append_null()?,
             }
 
             let record_key_builder = att_builder.keys();
@@ -172,10 +157,10 @@ pub fn gff2pq<P: AsRef<Path>>(input: P, output: P, parquet_compression: Compress
         )
         .unwrap();
 
-        writer.write(&rb).expect("Couldn't write record batch.");
+        writer.write(&rb)?;
     }
 
-    writer.close().expect("Couldn't close file.");
+    writer.close()?;
 
     Ok(())
 }
@@ -184,7 +169,7 @@ fn write_records_to_file<P: AsRef<Path>, R: BufRead>(
     mut reader: fasta::Reader<R>,
     output: P,
     parquet_compression: Compression,
-) -> Result<()> {
+) -> Result<(), BrrrrError> {
     let file_schema = Schema::new(vec![
         Field::new("id", DataType::Utf8, false),
         Field::new("description", DataType::Utf8, true),
@@ -256,7 +241,7 @@ pub fn fa2pq<P: AsRef<Path>>(
     output: &P,
     parquet_compression: Compression,
     bio_file_compression: BioFileCompression,
-) -> Result<()> {
+) -> Result<(), BrrrrError> {
     match bio_file_compression {
         BioFileCompression::GZIP => {
             let file = fs::File::open(input).expect("error");
@@ -278,7 +263,11 @@ pub fn fa2pq<P: AsRef<Path>>(
 /// * `input` The string representing the path to the input fasta file.
 /// * `output` The string representing the path to the output parquet file.
 /// * `parquet_compression` The parquet compression to use.
-pub fn fq2pq<P: AsRef<Path>>(input: P, output: P, parquet_compression: Compression) -> Result<()> {
+pub fn fq2pq<P: AsRef<Path>>(
+    input: P,
+    output: P,
+    parquet_compression: Compression,
+) -> Result<(), BrrrrError> {
     let file_schema = Schema::new(vec![
         Field::new("id", DataType::Utf8, false),
         Field::new("sequence", DataType::Utf8, false),

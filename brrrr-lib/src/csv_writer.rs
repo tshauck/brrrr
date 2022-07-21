@@ -2,10 +2,11 @@
 // All Rights Reserved
 /// The `csv_writer` module provides an implementation for the `RecordWriter` interface to read
 /// and write from csvs.
-use std::io::{BufRead, ErrorKind, Result, Write};
+use std::io::{self, BufRead, ErrorKind, Write};
 
 use serde::ser::Serialize;
 
+use crate::errors::BrrrrError;
 use crate::types::{FastaRecord, FastqRecord};
 use crate::writer;
 
@@ -29,7 +30,7 @@ impl<W: Write> CsvRecordWriter<W> {
 
 impl<W: Write> writer::RecordWriter for CsvRecordWriter<W> {
     /// Writes an input serializable object to the underlying writer.
-    fn write_serde_record<S: Serialize>(&mut self, r: S) -> Result<()> {
+    fn write_serde_record<S: Serialize>(&mut self, r: S) -> io::Result<()> {
         self.csv_writer.serialize(r)?;
         Ok(())
     }
@@ -41,18 +42,18 @@ impl<W: Write> writer::RecordWriter for CsvRecordWriter<W> {
 ///
 /// * `input` an input that implements the Read trait.
 /// * `output` an output that implements the Write trait.
-pub fn fa2csv<R: BufRead, W: Write>(input: R, output: &mut W) -> Result<()> {
+pub fn fa2csv<R: BufRead, W: Write>(input: R, output: &mut W) -> Result<(), BrrrrError> {
     let mut reader = fasta::Reader::new(input);
     let record_writer = &mut CsvRecordWriter::new(output);
 
     for read_record in reader.records() {
-        let record = read_record.expect("Error parsing record.");
+        let record = read_record?;
         let write_op = record_writer.write_serde_record(FastaRecord::from(record));
 
         if let Err(e) = write_op {
             match e.kind() {
                 ErrorKind::BrokenPipe => break,
-                _ => return Err(e),
+                _ => return Err(BrrrrError::IOError(e)),
             }
         }
     }
@@ -65,18 +66,18 @@ pub fn fa2csv<R: BufRead, W: Write>(input: R, output: &mut W) -> Result<()> {
 ///
 /// * `input` an input that implements the BufRead trait.
 /// * `output` an output that implements the Write trait.
-pub fn fq2csv<R: BufRead, W: Write>(input: R, output: &mut W) -> Result<()> {
+pub fn fq2csv<R: BufRead, W: Write>(input: R, output: &mut W) -> Result<(), BrrrrError> {
     let mut reader = fastq::Reader::new(input);
     let record_writer = &mut CsvRecordWriter::new(output);
 
     for read_record in reader.records() {
-        let record = read_record.expect("Error parsing record.");
+        let record = read_record?;
         let write_op = record_writer.write_serde_record(FastqRecord::from(record));
 
         if let Err(e) = write_op {
             match e.kind() {
                 ErrorKind::BrokenPipe => break,
-                _ => return Err(e),
+                _ => return Err(BrrrrError::IOError(e)),
             }
         }
     }
