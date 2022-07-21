@@ -20,7 +20,7 @@ use parquet::basic::Compression;
     name = "brrrr",
     about = "Commandline utilities for modern biology and chemistry informatics.",
     author = "Trent Hauck <trent@trenthauck.com>",
-    version = "0.13.0"
+    version = "0.14.0"
 )]
 struct Cli {
     #[clap(subcommand)]
