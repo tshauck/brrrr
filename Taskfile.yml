@@ -25,3 +25,7 @@ tasks:
       - cargo bench
     env:
       BENCH_DATA: ./benches/data
+  benchmark-python:  # file isn't checked into to git
+    dir: ./benchmarks/sprot/
+    cmds:
+      - bash run.sh
