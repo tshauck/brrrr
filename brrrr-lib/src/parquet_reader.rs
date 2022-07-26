@@ -25,12 +25,12 @@ use crate::errors::BrrrrError;
 /// * `input` - The path to the input Parquet file.
 /// * `output` - The path to the output FASTA file.
 pub fn pq2fa<P: AsRef<Path>>(input: P, output: P) -> Result<(), BrrrrError> {
-    let output_file = File::create(output).unwrap();
+    let output_file = File::create(output)?;
     let handle = io::BufWriter::new(output_file);
     let mut writer = fasta::Writer::new(handle);
 
     if let Ok(file) = File::open(&input) {
-        let reader = SerializedFileReader::new(file).unwrap();
+        let reader = SerializedFileReader::new(file)?;
 
         for row in reader.into_iter() {
             let mut id = None;
