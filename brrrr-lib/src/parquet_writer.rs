@@ -76,9 +76,9 @@ pub fn gff2pq<P: AsRef<Path>>(
 
     let records = reader.records();
 
-    let file = fs::File::create(output).unwrap();
+    let file = fs::File::create(output)?;
     let mut writer =
-        ArrowWriter::try_new(file, Arc::new(file_schema.clone()), Some(props.build())).unwrap();
+        ArrowWriter::try_new(file, Arc::new(file_schema.clone()), Some(props.build()))?;
     let chunk_size = 2usize.pow(20);
 
     for chunk in records.into_iter().chunks(chunk_size).into_iter() {
@@ -120,15 +120,15 @@ pub fn gff2pq<P: AsRef<Path>>(
 
             let record_key_builder = att_builder.keys();
             for k in gff_type.attributes.keys() {
-                record_key_builder.append_value(k).unwrap();
+                record_key_builder.append_value(k)?;
             }
 
             let record_value_builder = att_builder.values();
             for v in gff_type.attributes.values() {
-                record_value_builder.append_value(v).unwrap();
+                record_value_builder.append_value(v)?;
             }
 
-            att_builder.append(true).unwrap();
+            att_builder.append(true)?;
         }
 
         let seqname_array = seqname_builder.finish();
@@ -154,8 +154,7 @@ pub fn gff2pq<P: AsRef<Path>>(
                 Arc::new(frame_array),
                 Arc::new(att_array),
             ],
-        )
-        .unwrap();
+        )?;
 
         writer.write(&rb)?;
     }
@@ -180,9 +179,9 @@ fn write_records_to_file<P: AsRef<Path>, R: BufRead>(
         .set_compression(parquet_compression)
         .set_statistics_enabled(true);
 
-    let file = fs::File::create(output).unwrap();
+    let file = fs::File::create(output)?;
     let mut writer =
-        ArrowWriter::try_new(file, Arc::new(file_schema.clone()), Some(props.build())).unwrap();
+        ArrowWriter::try_new(file, Arc::new(file_schema.clone()), Some(props.build()))?;
 
     let chunk_size = 2usize.pow(20);
     for chunk in reader.records().into_iter().chunks(chunk_size).into_iter() {
@@ -219,13 +218,12 @@ fn write_records_to_file<P: AsRef<Path>, R: BufRead>(
                 Arc::new(desc_array),
                 Arc::new(seq_array),
             ],
-        )
-        .unwrap();
+        )?;
 
-        writer.write(&rb).expect("Couldn't write record batch.");
+        writer.write(&rb)?;
     }
 
-    writer.close().expect("Couldn't close file.");
+    writer.close()?;
     Ok(())
 }
 
@@ -244,13 +242,13 @@ pub fn fa2pq<P: AsRef<Path>>(
 ) -> Result<(), BrrrrError> {
     match bio_file_compression {
         BioFileCompression::GZIP => {
-            let file = fs::File::open(input).expect("error");
+            let file = fs::File::open(input)?;
             let gz = GzDecoder::new(BufReader::new(file));
             let reader = fasta::Reader::new(BufReader::new(gz));
             write_records_to_file(reader, output, parquet_compression)
         }
         BioFileCompression::UNCOMPRESSED => {
-            let file = fs::File::open(input).expect("error");
+            let file = fs::File::open(input)?;
             let reader = fasta::Reader::new(BufReader::new(file));
             write_records_to_file(reader, output, parquet_compression)
         }
@@ -284,9 +282,9 @@ pub fn fq2pq<P: AsRef<Path>>(
 
     let records = reader.records();
 
-    let file = fs::File::create(output).unwrap();
+    let file = fs::File::create(output)?;
     let mut writer =
-        ArrowWriter::try_new(file, Arc::new(file_schema.clone()), Some(props.build())).unwrap();
+        ArrowWriter::try_new(file, Arc::new(file_schema.clone()), Some(props.build()))?;
 
     let chunk_size = 2usize.pow(20);
     for chunk in records.into_iter().chunks(chunk_size).into_iter() {
@@ -338,12 +336,11 @@ pub fn fq2pq<P: AsRef<Path>>(
                 Arc::new(desc_array),
                 Arc::new(quality_array),
             ],
-        )
-        .unwrap();
+        )?;
 
-        writer.write(&rb).expect("Couldn't write record batch.");
+        writer.write(&rb)?;
     }
 
-    writer.close().expect("Couldn't close file.");
+    writer.close()?;
     Ok(())
 }

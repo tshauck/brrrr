@@ -12,6 +12,7 @@ use noodles::gff::record::Strand;
 use parquet::file::reader::SerializedFileReader;
 use parquet::record::RowAccessor;
 use std::io;
+use std::io::ErrorKind;
 use std::{fs::File, path::Path};
 
 use crate::errors::BrrrrError;
@@ -81,12 +82,12 @@ pub fn pq2fa<P: AsRef<Path>>(input: P, output: P) -> Result<(), BrrrrError> {
 /// * `input` - The path to the input Parquet file.
 /// * `output` - The path to the output FASTQ file.
 pub fn pq2fq<P: AsRef<Path>>(input: P, output: P) -> Result<(), BrrrrError> {
-    let output_file = File::create(output).unwrap();
+    let output_file = File::create(output)?;
     let handle = io::BufWriter::new(output_file);
     let mut writer = fastq::Writer::new(handle);
 
     if let Ok(file) = File::open(&input) {
-        let reader = SerializedFileReader::new(file).unwrap();
+        let reader = SerializedFileReader::new(file)?;
 
         for row in reader.into_iter() {
             let mut id = None;
@@ -133,12 +134,12 @@ pub fn pq2fq<P: AsRef<Path>>(input: P, output: P) -> Result<(), BrrrrError> {
 /// * `output` - The path to the output GFF file.
 
 pub fn pq2gff<P: AsRef<Path>>(input: P, output: P) -> Result<(), BrrrrError> {
-    let output_file = File::create(output).unwrap();
+    let output_file = File::create(output)?;
     let handle = io::BufWriter::new(output_file);
     let mut writer = gff::Writer::new(handle);
 
     if let Ok(file) = File::open(&input) {
-        let reader = SerializedFileReader::new(file).unwrap();
+        let reader = SerializedFileReader::new(file)?;
 
         for row in reader.into_iter() {
             let mut gff_record_builder = gff::Record::builder();
@@ -159,12 +160,20 @@ pub fn pq2gff<P: AsRef<Path>>(input: P, output: P) -> Result<(), BrrrrError> {
                     }
                     "start" => {
                         let int_position = row.get_long(e)?;
-                        let position = core::Position::new(int_position as usize).unwrap();
+                        let position =
+                            core::Position::new(int_position as usize).ok_or_else(|| {
+                                io::Error::new(ErrorKind::Other, "Error parsing start.")
+                            })?;
+
                         gff_record_builder = gff_record_builder.set_start(position);
                     }
                     "end" => {
                         let int_position = row.get_long(e)?;
-                        let position = core::Position::new(int_position as usize).unwrap();
+                        let position =
+                            core::Position::new(int_position as usize).ok_or_else(|| {
+                                io::Error::new(ErrorKind::NotFound, "Error parsing end.")
+                            })?;
+
                         gff_record_builder = gff_record_builder.set_end(position);
                     }
                     "score" => match row.get_long(e) {
