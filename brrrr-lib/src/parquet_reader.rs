@@ -59,7 +59,13 @@ pub fn pq2fa<P: AsRef<Path>>(input: P, output: P) -> Result<(), BrrrrError> {
                     writer.write_record(&record)?
                 }
                 (_, _, _) => {
-                    panic!("unable to handle values passed in id, description, or sequence")
+                    return Err(BrrrrError::IOError(io::Error::new(
+                        io::ErrorKind::Unsupported,
+                        format!(
+                            "Unexpected parsing for id: {}",
+                            id.unwrap_or(&String::from("unknown id")),
+                        ),
+                    )))
                 }
             };
         }
