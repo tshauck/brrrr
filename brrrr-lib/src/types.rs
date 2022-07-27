@@ -12,8 +12,8 @@ use std::str;
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct FastaRecord {
     pub id: String,
-    pub desc: Option<String>,
-    pub seq: String,
+    pub description: Option<String>,
+    pub sequence: String,
 }
 
 impl From<fasta::Record> for FastaRecord {
@@ -24,8 +24,8 @@ impl From<fasta::Record> for FastaRecord {
 
         FastaRecord {
             id: src.name().to_string(),
-            desc: src.description().map_or(None, |i| Some(i.to_string())),
-            seq: String::from(ss),
+            description: src.description().map_or(None, |i| Some(i.to_string())),
+            sequence: String::from(ss),
         }
     }
 }
@@ -33,8 +33,8 @@ impl From<fasta::Record> for FastaRecord {
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct FastqRecord {
     pub id: String,
-    pub desc: Option<String>,
-    pub seq: String,
+    pub description: Option<String>,
+    pub sequence: String,
     pub quality: String,
 }
 
@@ -49,8 +49,8 @@ impl From<fastq::Record> for FastqRecord {
 
         FastqRecord {
             id: String::from(name),
-            desc: None,
-            seq: String::from(ss),
+            description: None,
+            sequence: String::from(ss),
             quality: String::from(noodles_quality),
         }
     }
@@ -60,13 +60,13 @@ impl From<fastq::Record> for FastqRecord {
 pub struct GffRecord {
     pub seqname: String,
     pub source: String,
-    pub feature_type: String,
+    pub feature: String,
     pub start: usize,
     pub end: usize,
     pub score: Option<f32>,
     pub strand: String,
     pub frame: Option<String>,
-    pub attributes: HashMap<String, String>,
+    pub attribute: HashMap<String, String>,
 }
 
 impl From<gff::Record> for GffRecord {
@@ -97,13 +97,13 @@ impl From<gff::Record> for GffRecord {
         GffRecord {
             seqname: String::from(seqname),
             source: String::from(source),
-            feature_type: String::from(feature_type),
+            feature: String::from(feature_type),
             start: usize::from(start),
             end: usize::from(end),
             score,
             strand: String::from(strand.as_ref()),
             frame: phase,
-            attributes: gff_attrs,
+            attribute: gff_attrs,
         }
     }
 }

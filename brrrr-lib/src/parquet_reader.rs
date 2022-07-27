@@ -154,7 +154,7 @@ pub fn pq2gff<P: AsRef<Path>>(input: P, output: P) -> Result<(), BrrrrError> {
                         gff_record_builder =
                             gff_record_builder.set_source(row.get_string(e)?.to_string())
                     }
-                    "feature_type" => {
+                    "feature" => {
                         gff_record_builder =
                             gff_record_builder.set_type(row.get_string(e)?.to_string())
                     }
@@ -197,7 +197,7 @@ pub fn pq2gff<P: AsRef<Path>>(input: P, output: P) -> Result<(), BrrrrError> {
                             _ => continue,
                         }
                     }
-                    "attributes" => {
+                    "attribute" => {
                         let parquet_map = row.get_map(e)?;
                         let entries: Vec<Entry> = parquet_map
                             .entries()
@@ -262,7 +262,7 @@ mod tests {
 
         let actual_record = recs.get(0);
         if let Some(ar) = actual_record {
-            assert!(ar.is_ok());
+            assert!(ar.is_ok(), "{:?}", ar);
 
             match ar {
                 Ok(found_gff_record) => {

@@ -124,7 +124,7 @@ mod tests {
         fa2jsonl(input, &mut output).unwrap();
 
         let output_str = String::from_utf8(output).unwrap();
-        let expected_output = "{\"id\":\"A\",\"desc\":null,\"seq\":\"ATCG\"}\n".to_string();
+        let expected_output = "{\"id\":\"A\",\"description\":null,\"sequence\":\"ATCG\"}\n".to_string();
         assert_eq!(output_str, expected_output);
     }
 }

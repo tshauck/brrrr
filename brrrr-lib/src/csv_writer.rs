@@ -96,7 +96,7 @@ mod tests {
         fa2csv(input, &mut output).unwrap();
 
         let output_str = String::from_utf8(output).unwrap();
-        let expected_output = "id,desc,seq\nA,,ATCG\n".to_string();
+        let expected_output = "id,description,sequence\nA,,ATCG\n".to_string();
         assert_eq!(output_str, expected_output);
     }
 }

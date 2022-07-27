@@ -48,14 +48,14 @@ pub fn gff2pq<P: AsRef<Path>>(
     let file_schema = Schema::new(vec![
         Field::new("seqname", DataType::Utf8, false),
         Field::new("source", DataType::Utf8, true),
-        Field::new("feature_type", DataType::Utf8, false),
+        Field::new("feature", DataType::Utf8, false),
         Field::new("start", DataType::Int64, false),
         Field::new("end", DataType::Int64, false),
         Field::new("score", DataType::Int64, true),
         Field::new("strand", DataType::Utf8, false),
         Field::new("frame", DataType::Utf8, true),
         Field::new(
-            "attributes",
+            "attribute",
             DataType::Map(
                 Box::new(Field::new(
                     "entries",
@@ -84,7 +84,7 @@ pub fn gff2pq<P: AsRef<Path>>(
     for chunk in records.into_iter().chunks(chunk_size).into_iter() {
         let mut seqname_builder = StringBuilder::new(2048);
         let mut source_builder = StringBuilder::new(2048);
-        let mut feature_type_builder = StringBuilder::new(2048);
+        let mut feature_builder = StringBuilder::new(2048);
         let mut start_builder = Int64Builder::new(2048);
         let mut end_builder = Int64Builder::new(2048);
         let mut score_builder = Int64Builder::new(2048);
@@ -93,7 +93,7 @@ pub fn gff2pq<P: AsRef<Path>>(
 
         let key_builder = StringBuilder::new(2048);
         let value_builder = StringBuilder::new(2048);
-        let mut att_builder = MapBuilder::new(None, key_builder, value_builder);
+        let mut attribute_builder = MapBuilder::new(None, key_builder, value_builder);
 
         for chunk_i in chunk {
             let record = chunk_i?;
@@ -102,7 +102,7 @@ pub fn gff2pq<P: AsRef<Path>>(
 
             seqname_builder.append_value(gff_type.seqname)?;
             source_builder.append_value(gff_type.source)?;
-            feature_type_builder.append_value(gff_type.feature_type)?;
+            feature_builder.append_value(gff_type.feature)?;
             start_builder.append_value(gff_type.start as i64)?;
             end_builder.append_value(gff_type.end as i64)?;
 
@@ -118,41 +118,41 @@ pub fn gff2pq<P: AsRef<Path>>(
                 None => frame_builder.append_null()?,
             }
 
-            let record_key_builder = att_builder.keys();
-            for k in gff_type.attributes.keys() {
+            let record_key_builder = attribute_builder.keys();
+            for k in gff_type.attribute.keys() {
                 record_key_builder.append_value(k)?;
             }
 
-            let record_value_builder = att_builder.values();
-            for v in gff_type.attributes.values() {
+            let record_value_builder = attribute_builder.values();
+            for v in gff_type.attribute.values() {
                 record_value_builder.append_value(v)?;
             }
 
-            att_builder.append(true)?;
+            attribute_builder.append(true)?;
         }
 
         let seqname_array = seqname_builder.finish();
         let source_array = source_builder.finish();
-        let feature_type_array = feature_type_builder.finish();
+        let feature_array = feature_builder.finish();
         let start_array = start_builder.finish();
         let end_array = end_builder.finish();
         let score_array = score_builder.finish();
         let strand_array = strand_builder.finish();
         let frame_array = frame_builder.finish();
-        let att_array = att_builder.finish();
+        let attribute_array = attribute_builder.finish();
 
         let rb = RecordBatch::try_new(
             Arc::new(file_schema.clone()),
             vec![
                 Arc::new(seqname_array),
                 Arc::new(source_array),
-                Arc::new(feature_type_array),
+                Arc::new(feature_array),
                 Arc::new(start_array),
                 Arc::new(end_array),
                 Arc::new(score_array),
                 Arc::new(strand_array),
                 Arc::new(frame_array),
-                Arc::new(att_array),
+                Arc::new(attribute_array),
             ],
         )?;
 
@@ -196,7 +196,7 @@ fn write_records_to_file<P: AsRef<Path>, R: BufRead>(
             };
 
             id_builder.push(record.id);
-            match record.desc {
+            match record.description {
                 Some(x) => description_builder
                     .append_value(x)
                     .expect("Couldn't append description."),
@@ -204,7 +204,7 @@ fn write_records_to_file<P: AsRef<Path>, R: BufRead>(
                     .append_null()
                     .expect("Couldn't append null description."),
             }
-            seq_builder.push(record.seq);
+            seq_builder.push(record.sequence);
         }
 
         let id_array = StringArray::from(id_builder);
@@ -305,7 +305,7 @@ pub fn fq2pq<P: AsRef<Path>>(
                 .append_value(fastq_record.id)
                 .expect("Couldn't append id.");
 
-            match fastq_record.desc {
+            match fastq_record.description {
                 Some(x) => description_builder
                     .append_value(x)
                     .expect("Couldn't append description."),
@@ -315,7 +315,7 @@ pub fn fq2pq<P: AsRef<Path>>(
             }
 
             seq_builder
-                .append_value(fastq_record.seq)
+                .append_value(fastq_record.sequence)
                 .expect("Couldn't add sequence.");
 
             quality_builder
