@@ -14,7 +14,7 @@ use brrrr_lib::parquet_reader;
 use brrrr_lib::parquet_writer;
 use parquet::basic::Compression;
 
-/// The Enum that represents the underlying CLI.
+/// The Enum that represents the underlying command-line tool.
 #[derive(Parser)]
 #[clap(
     name = "brrrr",
@@ -153,6 +153,11 @@ enum Brrrr {
         #[clap(parse(from_os_str))]
         input: Option<PathBuf>,
     },
+    #[clap(name = "bam2jsonl", about = "Converts a BAM input to jsonl.")]
+    Bam2jsonl {
+        #[clap(parse(from_os_str))]
+        input: Option<PathBuf>,
+    },
 }
 
 fn main() -> Result<(), BrrrrError> {
@@ -196,6 +201,12 @@ fn main() -> Result<(), BrrrrError> {
                 let f = File::open(input)?;
                 csv_writer::fq2csv(BufReader::new(f), &mut stdout())
             }
+        },
+        Brrrr::Bam2jsonl { input } => if let Some(input) = input {
+            let f = File::open(input)?;
+            json_writer::bam2jsonl(BufReader::new(f), &mut stdout())
+        } else {
+            json_writer::bam2jsonl(stdin().lock(), &mut stdout())
         },
         Brrrr::Fa2jsonl { input } => match input {
             None => json_writer::fa2jsonl(stdin().lock(), &mut stdout()),
