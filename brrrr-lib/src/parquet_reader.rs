@@ -17,8 +17,8 @@ use std::{fs::File, path::Path};
 
 use crate::errors::BrrrrError;
 
-/// pq2fa reads an input parquet file, and converts the "id", "sequence", and "description" columns
-/// into a FASTA file with the format: ">{id} {description}\n{sequence}".
+/// pq2fa reads an input parquet file, and converts the `id`, `sequence`, and `description` columns
+/// into a FASTA file with the format: `>{id} {description}\n{sequence}`.
 ///
 /// # Arguments
 ///
@@ -75,7 +75,7 @@ pub fn pq2fa<P: AsRef<Path>>(input: P, output: P) -> Result<(), BrrrrError> {
     Ok(())
 }
 
-/// pq2fq reads an input parquet file and converts it to fastq.
+/// pq2fq reads an input parquet file and converts it to FASTQ.
 ///
 /// # Arguments
 ///

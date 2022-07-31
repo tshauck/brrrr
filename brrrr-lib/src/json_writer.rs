@@ -1,7 +1,7 @@
 // (c) Copyright 2020 Trent Hauck
 // All Rights Reserved
 /// The `json_writer` module provides an implementation for the `RecordWriter` interface to read
-/// and write from json.
+/// and write from JSON.
 use std::io::{self, BufRead, ErrorKind, Write};
 
 use serde::ser::Serialize;
@@ -21,7 +21,7 @@ use noodles::fastq;
 use noodles::gff;
 use noodles::sam;
 
-/// JsonRecordWriter holds a writer, and outputs FASTA records as newline delimited json.
+/// JsonRecordWriter holds a writer, and outputs FASTA records as newline delimited JSON.
 pub struct JsonRecordWriter<W: Write> {
     writer: W,
 }
@@ -120,7 +120,7 @@ pub fn gff2jsonl<R: BufRead, W: Write>(input: R, output: &mut W) -> Result<(), B
 /// # Arguments
 ///
 /// * `input` an input BAM file to convert to JSONL
-/// * `output` an ouput that inplements the Write trait.
+/// * `output` an output that implements the Write trait.
 pub fn bam2jsonl<R: BufRead, W: Write>(input: R, output: &mut W) -> Result<(), BrrrrError> {
     let mut reader = bam::Reader::new(input);
     let record_writer = &mut JsonRecordWriter::new(output);
